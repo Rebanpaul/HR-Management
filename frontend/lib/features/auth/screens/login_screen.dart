@@ -77,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Text(
                         'Enterprise Human Resource Management',
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onPrimary.withOpacity(0.8),
+                          color: colorScheme.onPrimary.withValues(alpha: 204),
                         ),
                       ),
                     ],

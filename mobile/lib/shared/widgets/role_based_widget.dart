@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../auth/providers/auth_provider.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
 /// A widget that only renders its child if the user has one of the allowed roles.
 class RoleBasedWidget extends ConsumerWidget {

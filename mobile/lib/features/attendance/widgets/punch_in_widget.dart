@@ -66,7 +66,7 @@ class PunchInWidget extends ConsumerWidget {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: isPunchedIn
-                        ? Colors.green.withOpacity(0.1)
+                        ? Colors.green.withValues(alpha: 26)
                         : colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(20),
                   ),

@@ -23,11 +23,11 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 1,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 128)),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -81,11 +81,11 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 1,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.3)),
+          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 77)),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import type { StringValue } from 'ms';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
@@ -176,6 +177,25 @@ export class AuthService {
     return tokens;
   }
 
+  async refreshTokensByRefreshToken(refreshToken: string) {
+    let decoded: any;
+
+    try {
+      decoded = await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const userId = decoded?.sub as string | undefined;
+    if (!userId) {
+      throw new UnauthorizedException('Invalid refresh token payload');
+    }
+
+    return this.refreshTokens(userId, refreshToken);
+  }
+
   async logout(userId: string) {
     await this.prisma.user.update({
       where: { id: userId },
@@ -194,8 +214,8 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d'),
+        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d') as StringValue,
       }),
     ]);
 

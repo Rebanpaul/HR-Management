@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Multi-Tenant Core ──────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  domain    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  employees     Employee[]
+  departments   Department[]
+  attendances   Attendance[]
+  leaveRequests LeaveRequest[]
+  payslips      Payslip[]
+}
+
+// ─── Identity Module ────────────────────────────────────────
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  HR_ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String
+  password     String
+  role         Role     @default(EMPLOYEE)
+  refreshToken String?
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  employee     Employee?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([email, tenantId])
+  @@index([tenantId])
+}
+
+// ─── HR Module ──────────────────────────────────────────────
+
+model Department {
+  id        String     @id @default(uuid())
+  name      String
+  tenantId  String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  employees Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([tenantId])
+}
+
+model Employee {
+  id            String        @id @default(uuid())
+  employeeCode  String
+  firstName     String
+  lastName      String
+  phone         String?
+  designation   String?
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id])
+  departmentId  String?
+  department    Department?   @relation(fields: [departmentId], references: [id])
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  attendances   Attendance[]
+  leaveRequests LeaveRequest[]
+  payslips      Payslip[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([employeeCode, tenantId])
+  @@index([tenantId])
+}
+
+// ─── Attendance Module (Manual Punch-in + Geo-fence) ────────
+
+model Attendance {
+  id          String    @id @default(uuid())
+  punchIn     DateTime
+  punchOut    DateTime?
+  punchInLat  Float?
+  punchInLng  Float?
+  punchOutLat Float?
+  punchOutLng Float?
+  status      String    @default("PRESENT")
+  notes       String?
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([employeeId, tenantId])
+}
+
+// ─── Leave Module ───────────────────────────────────────────
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model LeaveRequest {
+  id         String      @id @default(uuid())
+  startDate  DateTime
+  endDate    DateTime
+  reason     String
+  leaveType  String      @default("CASUAL")
+  status     LeaveStatus @default(PENDING)
+  employeeId String
+  employee   Employee    @relation(fields: [employeeId], references: [id])
+  tenantId   String
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([tenantId])
+}
+
+// ─── Payroll Module ─────────────────────────────────────────
+
+model Payslip {
+  id          String   @id @default(uuid())
+  month       Int
+  year        Int
+  basicSalary Float
+  deductions  Float    @default(0)
+  netSalary   Float
+  pdfUrl      String?
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([employeeId, month, year])
+  @@index([tenantId])
+}

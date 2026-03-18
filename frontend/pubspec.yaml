@@ -1,0 +1,39 @@
+name: hrms_frontend
+description: HRMS Admin Web Dashboard
+
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Shared package
+  shared:
+    path: ../packages/shared
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # HTTP
+  dio: ^5.7.0
+
+  # UI
+  cupertino_icons: ^1.0.8
+  intl: ^0.19.0
+  google_fonts: ^6.2.1
+  data_table_2: ^2.5.15
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

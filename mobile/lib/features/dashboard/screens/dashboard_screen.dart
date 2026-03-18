@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../attendance/providers/attendance_provider.dart';
 import '../../attendance/widgets/punch_in_widget.dart';
+import '../../salary/providers/payslips_provider.dart';
 import '../../../shared/widgets/role_based_widget.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -15,6 +18,12 @@ class DashboardScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    void showInfo(String message) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('HRMS'),
@@ -22,7 +31,7 @@ class DashboardScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
-              // TODO: Notifications
+              showInfo('Notifications are not available yet.');
             },
           ),
           PopupMenuButton<String>(
@@ -88,7 +97,10 @@ class DashboardScreen extends ConsumerWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          // TODO: Refresh dashboard data
+          await Future.wait([
+            ref.read(attendanceProvider.notifier).fetchToday(),
+            ref.read(payslipsProvider.notifier).fetchMyPayslips(),
+          ]);
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -135,7 +147,8 @@ class DashboardScreen extends ConsumerWidget {
                       label: 'Leave\nRequest',
                       color: colorScheme.tertiary,
                       onTap: () {
-                        // TODO: Navigate to leave request
+                        context.go('/portal');
+                        showInfo('Open the Leave tab to request leave.');
                       },
                     ),
                   ),
@@ -146,7 +159,8 @@ class DashboardScreen extends ConsumerWidget {
                       label: 'My\nPayslips',
                       color: colorScheme.secondary,
                       onTap: () {
-                        // TODO: Navigate to payslips
+                        context.go('/portal');
+                        showInfo('Open the Salary tab to view payslips.');
                       },
                     ),
                   ),
@@ -157,7 +171,8 @@ class DashboardScreen extends ConsumerWidget {
                       label: 'Attendance\nHistory',
                       color: colorScheme.primary,
                       onTap: () {
-                        // TODO: Navigate to attendance history
+                        context.go('/portal');
+                        showInfo('Open the Leave tab to see attendance history.');
                       },
                     ),
                   ),
@@ -189,9 +204,9 @@ class DashboardScreen extends ConsumerWidget {
                           child: _QuickActionCard(
                             icon: Icons.group_rounded,
                             label: 'Team\nAttendance',
-                            color: Colors.teal,
+                            color: colorScheme.secondary,
                             onTap: () {
-                              // TODO: Navigate to team attendance
+                              showInfo('Team attendance is not available yet.');
                             },
                           ),
                         ),
@@ -200,9 +215,9 @@ class DashboardScreen extends ConsumerWidget {
                           child: _QuickActionCard(
                             icon: Icons.pending_actions_rounded,
                             label: 'Leave\nApprovals',
-                            color: Colors.orange,
+                            color: colorScheme.tertiary,
                             onTap: () {
-                              // TODO: Navigate to leave approvals
+                              showInfo('Leave approvals are not available yet.');
                             },
                           ),
                         ),

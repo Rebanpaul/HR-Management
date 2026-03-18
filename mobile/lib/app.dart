@@ -4,23 +4,23 @@ import 'package:go_router/go_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
-import 'features/dashboard/screens/dashboard_screen.dart';
+import 'features/portal/screens/portal_shell.dart';
+import 'features/profile/screens/profile_screen.dart';
 
 class HrmsApp extends ConsumerWidget {
   const HrmsApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
+    ref.watch(authProvider);
 
     final router = GoRouter(
-      initialLocation: '/login',
+      // Temporary UI-testing default: open the portal directly.
+      initialLocation: '/portal',
       redirect: (context, state) {
-        final isLoggedIn = authState.isAuthenticated;
-        final isOnLogin = state.matchedLocation == '/login';
-
-        if (!isLoggedIn && !isOnLogin) return '/login';
-        if (isLoggedIn && isOnLogin) return '/dashboard';
+        // Temporary UI-testing bypass: never show the login screen.
+        // This keeps navigation stable while previewing UI (e.g., Chrome).
+        if (state.matchedLocation == '/login') return '/portal';
         return null;
       },
       routes: [
@@ -29,8 +29,18 @@ class HrmsApp extends ConsumerWidget {
           builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
-          path: '/dashboard',
-          builder: (context, state) => const DashboardScreen(),
+          path: '/portal',
+          builder: (context, state) => const PortalShell(),
+          routes: [
+            GoRoute(
+              path: 'profile',
+              builder: (context, state) => const ProfileScreen(),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfileScreen(),
         ),
       ],
     );

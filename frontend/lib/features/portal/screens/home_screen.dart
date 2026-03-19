@@ -1,607 +1,173 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../providers/attendance_provider.dart';
+import '../providers/payslips_provider.dart';
 
-class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
+class PortalHomeScreen extends ConsumerWidget {
+  final VoidCallback onOpenProfile;
+  final VoidCallback onOpenSalary;
+  final VoidCallback onOpenLeave;
+
+  const PortalHomeScreen({
+    super.key,
+    required this.onOpenProfile,
+    required this.onOpenSalary,
+    required this.onOpenLeave,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
-    final user = authState.user;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final user = ref.watch(authProvider).user;
+    final attendance = ref.watch(attendanceProvider);
+    final payslips = ref.watch(payslipsProvider);
 
-    final greetingName = user?.employee?.firstName;
-    final avatarLetter = (greetingName == null || greetingName.isEmpty)
-        ? 'A'
-        : greetingName.substring(0, 1).toUpperCase();
+    ref.listen(attendanceProvider, (prev, next) {
+      final msg = next.successMessage;
+      if (msg != null && msg.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      }
+      final err = next.error;
+      if (err != null && err.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      }
+    });
 
-    void showInfo(String message) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
-    }
+    ref.listen(payslipsProvider, (prev, next) {
+      final err = next.error;
+      if (err != null && err.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      }
+    });
 
-    return Scaffold(
-      body: Row(
+    final greetingName = user?.employee?.firstName ?? 'Employee';
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await Future.wait([
+          ref.read(attendanceProvider.notifier).fetchToday(),
+          ref.read(payslipsProvider.notifier).fetchMyPayslips(),
+        ]);
+      },
+      child: ListView(
+        padding: const EdgeInsets.all(0),
         children: [
-          _Sidebar(
-            userName: user?.employee?.fullName ?? 'Administrator',
-            roleLabel: 'Administrator',
-            onItemSelected: (label) => showInfo('$label is not wired yet.'),
-            onLogout: () => ref.read(authProvider.notifier).logout(),
-          ),
-          const VerticalDivider(thickness: 1, width: 1),
-          Expanded(
-            child: Column(
-              children: [
-                _TopBar(
-                  avatarLetter: avatarLetter,
-                  onImportData: () => showInfo('Import is not wired yet.'),
-                  onOpenMail: () => showInfo('Mail is not wired yet.'),
-                  onOpenNotifications: () =>
-                      showInfo('Notifications are not wired yet.'),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome, ${user?.employee?.firstName ?? 'Admin'}',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Ready to manage your HR tasks today?',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _MetricsGrid(
-                          items: [
-                            _MetricItem(
-                              title: 'Total Employees',
-                              value: '245',
-                              subtitle: 'Active employees in the company',
-                              icon: Icons.people_alt_rounded,
-                              emphasized: true,
-                            ),
-                            _MetricItem(
-                              title: 'New Hires',
-                              value: '4',
-                              subtitle: 'New employees this month',
-                              icon: Icons.person_add_alt_1_rounded,
-                            ),
-                            _MetricItem(
-                              title: 'Average Tenure',
-                              value: '2.3 yr',
-                              subtitle: 'Average length of time joined',
-                              icon: Icons.timeline_rounded,
-                            ),
-                            _MetricItem(
-                              title: 'Probation',
-                              value: '5',
-                              subtitle: 'Employees in probation period',
-                              icon: Icons.assignment_turned_in_rounded,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isWide = constraints.maxWidth >= 1100;
-                            return Wrap(
-                              spacing: 16,
-                              runSpacing: 16,
-                              children: [
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.46)
-                                      : constraints.maxWidth,
-                                  child: const _BestEmployeeCard(),
-                                ),
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.26)
-                                      : constraints.maxWidth,
-                                  child: const _WorkedHoursCard(),
-                                ),
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.26)
-                                      : constraints.maxWidth,
-                                  child: const _TodayScheduleCard(),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isWide = constraints.maxWidth >= 1100;
-                            return Wrap(
-                              spacing: 16,
-                              runSpacing: 16,
-                              children: [
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.62)
-                                      : constraints.maxWidth,
-                                  child: const _OnboardingTaskCard(),
-                                ),
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.36)
-                                      : constraints.maxWidth,
-                                  child: const _ShortcutCard(),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+          Text(
+            'Welcome, $greetingName',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Sidebar extends StatefulWidget {
-  final String userName;
-  final String roleLabel;
-  final ValueChanged<String> onItemSelected;
-  final VoidCallback onLogout;
-
-  const _Sidebar({
-    required this.userName,
-    required this.roleLabel,
-    required this.onItemSelected,
-    required this.onLogout,
-  });
-
-  @override
-  State<_Sidebar> createState() => _SidebarState();
-}
-
-class _SidebarState extends State<_Sidebar> {
-  String _selected = 'Dashboard';
-
-  void _select(String label) {
-    setState(() => _selected = label);
-    widget.onItemSelected(label);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    // Uses theme colors only; creates a darker surface using primary.
-    final background = Color.alphaBlend(
-      colorScheme.primary.withValues(alpha: 230),
-      colorScheme.surface,
-    );
-
-    return Container(
-      width: 280,
-      color: background,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.waves_rounded, color: colorScheme.onPrimary),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Collectiva',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.onPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
+          const SizedBox(height: 4),
+          Text(
+            'Ready to manage your HR tasks today?',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _MetricsGrid(
+            items: [
+              _MetricItem(
+                title: 'Total Employees',
+                value: '245',
+                subtitle: 'The total number of active employees currently in the company.',
+                icon: Icons.people_alt_rounded,
+                emphasized: true,
               ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colorScheme.onPrimary.withValues(alpha: 18),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colorScheme.onPrimary.withValues(alpha: 35),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor:
-                          colorScheme.onPrimary.withValues(alpha: 22),
-                      child: Icon(
-                        Icons.person_rounded,
-                        color: colorScheme.onPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Login as',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color:
-                                  colorScheme.onPrimary.withValues(alpha: 180),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.roleLabel,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: colorScheme.onPrimary,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: colorScheme.onPrimary.withValues(alpha: 220),
-                    ),
-                  ],
-                ),
+              _MetricItem(
+                title: 'New Hires',
+                value: '4',
+                subtitle: 'The number of new employees in the current month.',
+                icon: Icons.person_add_alt_1_rounded,
               ),
-              const SizedBox(height: 12),
-              TextField(
-                style: TextStyle(color: colorScheme.onPrimary),
-                decoration: InputDecoration(
-                  hintText: 'by name or ID',
-                  hintStyle:
-                      TextStyle(color: colorScheme.onPrimary.withValues(alpha: 140)),
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    color: colorScheme.onPrimary.withValues(alpha: 200),
-                  ),
-                  filled: true,
-                  fillColor: colorScheme.onPrimary.withValues(alpha: 18),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: colorScheme.onPrimary.withValues(alpha: 35),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: colorScheme.onPrimary.withValues(alpha: 35),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: colorScheme.onPrimary.withValues(alpha: 90),
-                    ),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                ),
+              _MetricItem(
+                title: 'Average Tenure',
+                value: '2.3 yr',
+                subtitle: 'The average length of time employees joined the company.',
+                icon: Icons.timeline_rounded,
               ),
-              const SizedBox(height: 16),
-              _SidebarSection(
-                title: 'ADMINISTRATIVE',
-                children: [
-                  _SidebarItem(
-                    label: 'Dashboard',
-                    icon: Icons.dashboard_outlined,
-                    selected: _selected == 'Dashboard',
-                    onTap: () => _select('Dashboard'),
-                  ),
-                  _SidebarItem(
-                    label: 'Employees',
-                    icon: Icons.badge_outlined,
-                    selected: _selected == 'Employees',
-                    onTap: () => _select('Employees'),
-                  ),
-                  _SidebarItem(
-                    label: 'Attendance',
-                    icon: Icons.access_time_rounded,
-                    selected: _selected == 'Attendance',
-                    onTap: () => _select('Attendance'),
-                  ),
-                  _SidebarItem(
-                    label: 'Payroll',
-                    icon: Icons.receipt_long_outlined,
-                    selected: _selected == 'Payroll',
-                    onTap: () => _select('Payroll'),
-                  ),
-                  _SidebarItem(
-                    label: 'Reports & Analytics',
-                    icon: Icons.query_stats_rounded,
-                    selected: _selected == 'Reports & Analytics',
-                    onTap: () => _select('Reports & Analytics'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              _SidebarSection(
-                title: 'TALENT & GROWTH',
-                children: [
-                  _SidebarItem(
-                    label: 'Recruitment',
-                    icon: Icons.how_to_reg_outlined,
-                    selected: _selected == 'Recruitment',
-                    onTap: () => _select('Recruitment'),
-                  ),
-                  _SidebarItem(
-                    label: 'Performance',
-                    icon: Icons.speed_rounded,
-                    selected: _selected == 'Performance',
-                    onTap: () => _select('Performance'),
-                  ),
-                  _SidebarItem(
-                    label: 'Training & Development',
-                    icon: Icons.school_outlined,
-                    selected: _selected == 'Training & Development',
-                    onTap: () => _select('Training & Development'),
-                  ),
-                  _SidebarItem(
-                    label: 'Engagement & Feedback',
-                    icon: Icons.forum_outlined,
-                    selected: _selected == 'Engagement & Feedback',
-                    onTap: () => _select('Engagement & Feedback'),
-                  ),
-                  _SidebarItem(
-                    label: 'Settings',
-                    icon: Icons.settings_outlined,
-                    selected: _selected == 'Settings',
-                    onTap: () => _select('Settings'),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      widget.userName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onPrimary.withValues(alpha: 210),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Sign out',
-                    onPressed: widget.onLogout,
-                    icon: Icon(
-                      Icons.logout_rounded,
-                      color: colorScheme.onPrimary.withValues(alpha: 230),
-                    ),
-                  ),
-                ],
+              _MetricItem(
+                title: 'Probation',
+                value: '5',
+                subtitle: 'The number of employees currently in their probation period.',
+                icon: Icons.assignment_turned_in_rounded,
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SidebarSection extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-
-  const _SidebarSection({
-    required this.title,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 6, bottom: 8),
-          child: Text(
-            title,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colorScheme.onPrimary.withValues(alpha: 160),
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-            ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 1100;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.46)
+                        : constraints.maxWidth,
+                    child: const _BestEmployeeCard(),
+                  ),
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.26)
+                        : constraints.maxWidth,
+                    child: const _WorkedHoursCard(),
+                  ),
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.26)
+                        : constraints.maxWidth,
+                    child: const _TodayScheduleCard(),
+                  ),
+                ],
+              );
+            },
           ),
-        ),
-        ...children,
-      ],
-    );
-  }
-}
-
-class _SidebarItem extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _SidebarItem({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected
-              ? colorScheme.onPrimary.withValues(alpha: 18)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          border: selected
-              ? Border.all(color: colorScheme.onPrimary.withValues(alpha: 35))
-              : null,
-        ),
-        child: Row(
-          children: [
-            Icon(icon,
-                size: 18,
-                color: colorScheme.onPrimary
-                    .withValues(alpha: selected ? 255 : 200)),
-            const SizedBox(width: 10),
-            Expanded(
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 1100;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.62)
+                        : constraints.maxWidth,
+                    child: const _OnboardingTaskCard(),
+                  ),
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.36)
+                        : constraints.maxWidth,
+                    child: _ShortcutCard(
+                      onOpenSalary: onOpenSalary,
+                      onOpenLeave: onOpenLeave,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
               child: Text(
-                label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onPrimary
-                      .withValues(alpha: selected ? 255 : 210),
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                attendance.isLoading || payslips.isLoading
+                    ? 'Loading your attendance and payslip data…'
+                    : 'Tip: Pull to refresh to fetch attendance and payslips.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  final String avatarLetter;
-  final VoidCallback onImportData;
-  final VoidCallback onOpenMail;
-  final VoidCallback onOpenNotifications;
-
-  const _TopBar({
-    required this.avatarLetter,
-    required this.onImportData,
-    required this.onOpenMail,
-    required this.onOpenNotifications,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Dashboard',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          FilledButton.icon(
-            onPressed: onImportData,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Import Data'),
-          ),
-          const SizedBox(width: 10),
-          _DateChip(value: DateTime.now()),
-          const SizedBox(width: 10),
-          IconButton(
-            tooltip: 'Mail',
-            onPressed: onOpenMail,
-            icon: const Icon(Icons.mail_outline_rounded),
-          ),
-          IconButton(
-            tooltip: 'Notifications',
-            onPressed: onOpenNotifications,
-            icon: const Icon(Icons.notifications_outlined),
-          ),
-          const SizedBox(width: 6),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: colorScheme.primaryContainer,
-            child: Text(
-              avatarLetter,
-              style: TextStyle(
-                color: colorScheme.onPrimaryContainer,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DateChip extends StatelessWidget {
-  final DateTime value;
-
-  const _DateChip({required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.calendar_month_rounded,
-              size: 18, color: colorScheme.onSurfaceVariant),
-          const SizedBox(width: 8),
-          Text(
-            DateFormat('MMM dd, y').format(value),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -1022,7 +588,8 @@ class _SparklinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SparklinePainter oldDelegate) {
-    return oldDelegate.lineColor != lineColor || oldDelegate.fillColor != fillColor;
+    return oldDelegate.lineColor != lineColor ||
+        oldDelegate.fillColor != fillColor;
   }
 }
 
@@ -1109,21 +676,21 @@ class _TodayScheduleCardState extends State<_TodayScheduleCard> {
               ),
             ),
             const SizedBox(height: 10),
-            _ScheduleItem(
+            const _ScheduleItem(
               time: '09:00',
               title: 'Team Sync-Up (Marketing)',
               range: '09:00 - 11:00',
             ),
             const SizedBox(height: 10),
-            _ScheduleBreak(label: 'Lunch Break', range: '11:00 - 14:00'),
+            const _ScheduleBreak(label: 'Lunch Break', range: '11:00 - 14:00'),
             const SizedBox(height: 10),
-            _ScheduleItem(
+            const _ScheduleItem(
               time: '14:00',
               title: 'Interview with Sarah Lee (Developer)',
               range: '14:00 - 15:00',
             ),
             const SizedBox(height: 10),
-            _ScheduleItem(
+            const _ScheduleItem(
               time: '16:00',
               title: 'Monthly Performance Review (Sales Team)',
               range: '16:00 - 17:00',
@@ -1343,7 +910,13 @@ class _LegendDot extends StatelessWidget {
 }
 
 class _ShortcutCard extends StatelessWidget {
-  const _ShortcutCard();
+  final VoidCallback onOpenSalary;
+  final VoidCallback onOpenLeave;
+
+  const _ShortcutCard({
+    required this.onOpenSalary,
+    required this.onOpenLeave,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1367,14 +940,14 @@ class _ShortcutCard extends StatelessWidget {
               runSpacing: 10,
               children: [
                 OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.post_add_rounded),
-                  label: const Text('Post Job'),
+                  onPressed: onOpenLeave,
+                  icon: const Icon(Icons.event_rounded),
+                  label: const Text('Leave'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.event_rounded),
-                  label: const Text('Schedule Meeting'),
+                  onPressed: onOpenSalary,
+                  icon: const Icon(Icons.payments_rounded),
+                  label: const Text('Payslips'),
                 ),
                 IconButton.filledTonal(
                   onPressed: () {},

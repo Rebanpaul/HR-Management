@@ -1,26 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
+import 'features/portal/screens/portal_shell.dart';
+import 'features/portal/screens/profile_screen.dart';
 
 class HrmsWebApp extends ConsumerWidget {
   const HrmsWebApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Default behavior for now: skip login during local UI testing.
+    // Disable anytime with: --dart-define=DEV_BYPASS_LOGIN=false
+    final devBypassLogin = kDebugMode &&
+        const bool.fromEnvironment('DEV_BYPASS_LOGIN', defaultValue: true);
     final authState = ref.watch(authProvider);
 
     final router = GoRouter(
-      initialLocation: '/login',
+      initialLocation: devBypassLogin ? '/portal' : '/login',
       redirect: (context, state) {
+        if (devBypassLogin) {
+          if (state.matchedLocation == '/login') return '/portal';
+          if (state.matchedLocation == '/dashboard') return '/portal';
+          return null;
+        }
+
         final isLoggedIn = authState.isAuthenticated;
         final isOnLogin = state.matchedLocation == '/login';
 
+        final role = authState.user?.role;
+        final isEmployee = role == 'EMPLOYEE';
+        final isOnPortal = state.matchedLocation.startsWith('/portal');
+        final isOnDashboard = state.matchedLocation == '/dashboard';
+
         if (!isLoggedIn && !isOnLogin) return '/login';
-        if (isLoggedIn && isOnLogin) return '/dashboard';
+
+        if (isLoggedIn && isOnLogin) {
+          return isEmployee ? '/portal' : '/dashboard';
+        }
+
+        if (isLoggedIn && isEmployee && isOnDashboard) return '/portal';
+        if (isLoggedIn && !isEmployee && isOnPortal) return '/dashboard';
+
         return null;
       },
       routes: [
@@ -32,6 +57,16 @@ class HrmsWebApp extends ConsumerWidget {
           path: '/dashboard',
           builder: (context, state) => const DashboardScreen(),
         ),
+        GoRoute(
+          path: '/portal',
+          builder: (context, state) => const PortalShell(),
+          routes: [
+            GoRoute(
+              path: 'profile',
+              builder: (context, state) => const ProfileScreen(),
+            ),
+          ],
+        ),
       ],
     );
 
@@ -40,7 +75,7 @@ class HrmsWebApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       routerConfig: router,
     );
   }

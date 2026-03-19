@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'core/theme/app_theme.dart';
@@ -14,13 +15,24 @@ class HrmsApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(authProvider);
 
+    // Default behavior for now: skip login during local UI testing.
+    // Disable anytime with: --dart-define=DEV_BYPASS_LOGIN=false
+    final devBypassLogin = kDebugMode &&
+        const bool.fromEnvironment('DEV_BYPASS_LOGIN', defaultValue: true);
+
     final router = GoRouter(
-      // Temporary UI-testing default: open the portal directly.
-      initialLocation: '/portal',
+      initialLocation: devBypassLogin ? '/portal' : '/login',
       redirect: (context, state) {
-        // Temporary UI-testing bypass: never show the login screen.
-        // This keeps navigation stable while previewing UI (e.g., Chrome).
-        if (state.matchedLocation == '/login') return '/portal';
+        if (devBypassLogin) {
+          if (state.matchedLocation == '/login') return '/portal';
+          return null;
+        }
+
+        final isLoggedIn = ref.read(authProvider).isAuthenticated;
+        final isOnLogin = state.matchedLocation == '/login';
+
+        if (!isLoggedIn && !isOnLogin) return '/login';
+        if (isLoggedIn && isOnLogin) return '/portal';
         return null;
       },
       routes: [

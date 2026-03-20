@@ -38,8 +38,11 @@ class AttendanceHistoryState {
 class AttendanceHistoryNotifier extends StateNotifier<AttendanceHistoryState> {
   final ApiClient _apiClient;
 
-  AttendanceHistoryNotifier(this._apiClient) : super(const AttendanceHistoryState()) {
-    fetch();
+  AttendanceHistoryNotifier(this._apiClient, {bool autoFetch = true})
+      : super(const AttendanceHistoryState()) {
+    if (autoFetch) {
+      fetch();
+    }
   }
 
   Future<void> fetch({int page = 1, int limit = 50}) async {

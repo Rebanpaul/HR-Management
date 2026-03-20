@@ -128,7 +128,7 @@ class PortalHomeScreen extends ConsumerWidget {
                           Icon(
                             Icons.history_rounded,
                             size: 40,
-                            color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                            color: colorScheme.onSurfaceVariant.withAlpha(77),
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -241,7 +241,7 @@ class _MetricCard extends StatelessWidget {
                   height: 32,
                   decoration: BoxDecoration(
                     color: item.emphasized
-                        ? Colors.white.withOpacity(0.15)
+                      ? Colors.white.withAlpha(38)
                         : colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -313,7 +313,7 @@ class _AttendanceStatusCard extends StatelessWidget {
                       Icon(
                         Icons.access_time_rounded,
                         size: 40,
-                        color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                        color: colorScheme.onSurfaceVariant.withAlpha(77),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -341,7 +341,6 @@ class _QuickActionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     final actions = [
       ('Approve Leaves', Icons.task_alt_rounded, AppTheme.brandPrimary),
@@ -379,9 +378,9 @@ class _QuickActionsCard extends StatelessWidget {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: a.$3.withOpacity(0.06),
+                      color: a.$3.withAlpha(15),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: a.$3.withOpacity(0.12)),
+                      border: Border.all(color: a.$3.withAlpha(31)),
                     ),
                     child: Row(
                       children: [
@@ -397,7 +396,7 @@ class _QuickActionsCard extends StatelessWidget {
                           ),
                         ),
                         Icon(Icons.arrow_forward_ios_rounded,
-                            size: 14, color: a.$3.withOpacity(0.5)),
+                            size: 14, color: a.$3.withAlpha(128)),
                       ],
                     ),
                   ),

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../attendance/providers/attendance_provider.dart';
 import '../../attendance/widgets/punch_in_widget.dart';
-import '../../salary/providers/payslips_provider.dart';
 import '../../../shared/widgets/portal_header.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../core/theme/app_theme.dart';
@@ -201,9 +200,9 @@ class _GlassTimeChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withAlpha(31),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.18)),
+        border: Border.all(color: Colors.white.withAlpha(46)),
       ),
       child: Column(
         children: [
@@ -245,9 +244,9 @@ class _GlassMetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
+        color: color.withAlpha(18),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withOpacity(0.15)),
+        border: Border.all(color: color.withAlpha(38)),
       ),
       child: Column(
         children: [
@@ -255,7 +254,7 @@ class _GlassMetricTile extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withAlpha(31),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(Icons.calendar_today_rounded, size: 16, color: color),
@@ -272,7 +271,7 @@ class _GlassMetricTile extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: color.withOpacity(0.8),
+              color: color.withAlpha(204),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -339,7 +338,7 @@ class _EmptyStateCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
         child: Column(
           children: [
-            Icon(icon, color: colorScheme.onSurfaceVariant.withOpacity(0.4), size: 36),
+            Icon(icon, color: colorScheme.onSurfaceVariant.withAlpha(102), size: 36),
             const SizedBox(height: 10),
             Text(
               text,

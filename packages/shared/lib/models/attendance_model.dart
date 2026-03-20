@@ -9,6 +9,9 @@ class AttendanceModel {
   final String status;
   final String? notes;
   final String employeeId;
+  final String? employeeName;
+  final String? employeeCode;
+  final String? departmentName;
   final String tenantId;
 
   AttendanceModel({
@@ -22,10 +25,24 @@ class AttendanceModel {
     required this.status,
     this.notes,
     required this.employeeId,
+    this.employeeName,
+    this.employeeCode,
+    this.departmentName,
     required this.tenantId,
   });
 
   factory AttendanceModel.fromJson(Map<String, dynamic> json) {
+    String? empName;
+    String? empCode;
+    String? deptName;
+    if (json['employee'] != null) {
+      final emp = json['employee'] as Map<String, dynamic>;
+      empName = '${emp['firstName']} ${emp['lastName']}';
+      empCode = emp['employeeCode'] as String?;
+      final dept = emp['department'] as Map<String, dynamic>?;
+      deptName = dept?['name'] as String?;
+    }
+
     return AttendanceModel(
       id: json['id'] as String,
       punchIn: DateTime.parse(json['punchIn'] as String),
@@ -39,6 +56,9 @@ class AttendanceModel {
       status: json['status'] as String,
       notes: json['notes'] as String?,
       employeeId: json['employeeId'] as String,
+      employeeName: empName,
+      employeeCode: empCode,
+      departmentName: deptName,
       tenantId: json['tenantId'] as String,
     );
   }

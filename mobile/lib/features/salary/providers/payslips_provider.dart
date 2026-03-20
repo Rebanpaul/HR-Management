@@ -31,8 +31,11 @@ class PayslipsState {
 class PayslipsNotifier extends StateNotifier<PayslipsState> {
   final ApiClient _apiClient;
 
-  PayslipsNotifier(this._apiClient) : super(const PayslipsState()) {
-    fetchMyPayslips();
+  PayslipsNotifier(this._apiClient, {bool autoFetchMyPayslips = true})
+      : super(const PayslipsState()) {
+    if (autoFetchMyPayslips) {
+      fetchMyPayslips();
+    }
   }
 
   Future<void> fetchMyPayslips() async {

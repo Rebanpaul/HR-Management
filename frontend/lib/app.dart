@@ -17,7 +17,7 @@ class HrmsWebApp extends ConsumerWidget {
     // Default behavior for now: skip login during local UI testing.
     // Disable anytime with: --dart-define=DEV_BYPASS_LOGIN=false
     final devBypassLogin = kDebugMode &&
-        const bool.fromEnvironment('DEV_BYPASS_LOGIN', defaultValue: true);
+        const bool.fromEnvironment('DEV_BYPASS_LOGIN', defaultValue: false);
     final authState = ref.watch(authProvider);
 
     final router = GoRouter(
@@ -33,18 +33,18 @@ class HrmsWebApp extends ConsumerWidget {
         final isOnLogin = state.matchedLocation == '/login';
 
         final role = authState.user?.role;
-        final isEmployee = role == 'EMPLOYEE';
+        final isAdmin = role == 'HR_ADMIN' || role == 'SUPER_ADMIN';
         final isOnPortal = state.matchedLocation.startsWith('/portal');
         final isOnDashboard = state.matchedLocation == '/dashboard';
 
         if (!isLoggedIn && !isOnLogin) return '/login';
 
         if (isLoggedIn && isOnLogin) {
-          return isEmployee ? '/portal' : '/dashboard';
+          return isAdmin ? '/dashboard' : '/portal';
         }
 
-        if (isLoggedIn && isEmployee && isOnDashboard) return '/portal';
-        if (isLoggedIn && !isEmployee && isOnPortal) return '/dashboard';
+        if (isLoggedIn && !isAdmin && isOnDashboard) return '/portal';
+        if (isLoggedIn && isAdmin && isOnPortal) return '/dashboard';
 
         return null;
       },

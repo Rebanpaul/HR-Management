@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -49,12 +48,12 @@ class AppTheme {
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.3)),
+          side: BorderSide(color: colorScheme.outlineVariant.withAlpha(77)),
         ),
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: Colors.transparent,
-        indicatorColor: brandPrimary.withOpacity(0.12),
+        indicatorColor: brandPrimary.withAlpha(31),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -82,7 +81,7 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.4)),
+          borderSide: BorderSide(color: colorScheme.outlineVariant.withAlpha(102)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -151,20 +150,20 @@ class AppTheme {
   // ─ Glass Card Decoration ──────────────────────────────
   static BoxDecoration glassCard({double opacity = 0.08, double radius = 20}) {
     return BoxDecoration(
-      color: Colors.white.withOpacity(opacity),
+      color: Colors.white.withAlpha((opacity * 255).round()),
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: Colors.white.withOpacity(0.12)),
+      border: Border.all(color: Colors.white.withAlpha(31)),
     );
   }
 
   static BoxDecoration glassCardLight({double radius = 20}) {
     return BoxDecoration(
-      color: Colors.white.withOpacity(0.7),
+      color: Colors.white.withAlpha(179),
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: Colors.white.withOpacity(0.4)),
+      border: Border.all(color: Colors.white.withAlpha(102)),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.04),
+          color: Colors.black.withAlpha(10),
           blurRadius: 24,
           offset: const Offset(0, 4),
         ),

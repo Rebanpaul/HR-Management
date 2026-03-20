@@ -38,8 +38,11 @@ class AttendanceState {
 class AttendanceNotifier extends StateNotifier<AttendanceState> {
   final ApiClient _apiClient;
 
-  AttendanceNotifier(this._apiClient) : super(const AttendanceState()) {
-    fetchToday();
+  AttendanceNotifier(this._apiClient, {bool autoFetchToday = true})
+      : super(const AttendanceState()) {
+    if (autoFetchToday) {
+      fetchToday();
+    }
   }
 
   Future<void> fetchToday() async {

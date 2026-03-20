@@ -6,25 +6,37 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:hrms_mobile/main.dart';
+import 'package:hrms_mobile/app.dart';
+import 'package:hrms_mobile/features/attendance/providers/attendance_provider.dart';
+import 'package:hrms_mobile/features/attendance/providers/attendance_history_provider.dart';
+import 'package:hrms_mobile/features/auth/providers/auth_provider.dart';
+import 'package:hrms_mobile/features/salary/providers/payslips_provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App builds smoke test', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          attendanceProvider.overrideWith((ref) {
+            final apiClient = ref.read(apiClientProvider);
+            return AttendanceNotifier(apiClient, autoFetchToday: false);
+          }),
+          attendanceHistoryProvider.overrideWith((ref) {
+            final apiClient = ref.read(apiClientProvider);
+            return AttendanceHistoryNotifier(apiClient, autoFetch: false);
+          }),
+          payslipsProvider.overrideWith((ref) {
+            final apiClient = ref.read(apiClientProvider);
+            return PayslipsNotifier(apiClient, autoFetchMyPayslips: false);
+          }),
+        ],
+        child: const HrmsApp(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

@@ -42,6 +42,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   late final ApiClient _apiClient;
 
   AuthNotifier() : super(const AuthState()) {
+    const apiBaseUrl = String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'http://localhost:3000/api',
+    );
+
     _apiClient = ApiClient(
       getAccessToken: () async => state.accessToken,
       getRefreshToken: () async => state.refreshToken,
@@ -51,6 +56,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       onAuthFailure: () {
         state = const AuthState();
       },
+      baseUrl: apiBaseUrl,
     );
   }
 

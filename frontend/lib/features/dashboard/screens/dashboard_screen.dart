@@ -2,26 +2,50 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'attendance_admin_screen.dart';
+import 'employees_admin_screen.dart';
+import 'leave_admin_screen.dart';
+import 'payroll_admin_screen.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  String _selected = 'Dashboard';
+
+  void _select(String label) {
+    setState(() => _selected = label);
+  }
+
+  Widget _buildContent(String label) {
+    switch (label) {
+      case 'Employees':
+        return const EmployeesAdminScreen();
+      case 'Leave':
+        return const LeaveAdminScreen();
+      case 'Attendance':
+        return const AttendanceAdminScreen();
+      case 'Payslips':
+        return const PayrollAdminScreen();
+      case 'Dashboard':
+      default:
+        return const _DashboardOverview();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final user = authState.user;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     final greetingName = user?.employee?.firstName;
     final avatarLetter = (greetingName == null || greetingName.isEmpty)
         ? 'A'
         : greetingName.substring(0, 1).toUpperCase();
-
-    void showInfo(String message) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
-    }
 
     return Scaffold(
       body: Row(
@@ -29,7 +53,8 @@ class DashboardScreen extends ConsumerWidget {
           _Sidebar(
             userName: user?.employee?.fullName ?? 'Administrator',
             roleLabel: 'Administrator',
-            onItemSelected: (label) => showInfo('$label is not wired yet.'),
+            selected: _selected,
+            onItemSelected: _select,
             onLogout: () => ref.read(authProvider.notifier).logout(),
           ),
           const VerticalDivider(thickness: 1, width: 1),
@@ -38,117 +63,16 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 _TopBar(
                   avatarLetter: avatarLetter,
+                  title: _selected,
                   onImportData: () => showInfo('Import is not wired yet.'),
                   onOpenMail: () => showInfo('Mail is not wired yet.'),
                   onOpenNotifications: () =>
                       showInfo('Notifications are not wired yet.'),
                 ),
                 Expanded(
-                  child: SingleChildScrollView(
+                  child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome, ${user?.employee?.firstName ?? 'Admin'}',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Ready to manage your HR tasks today?',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _MetricsGrid(
-                          items: [
-                            _MetricItem(
-                              title: 'Total Employees',
-                              value: '245',
-                              subtitle: 'Active employees in the company',
-                              icon: Icons.people_alt_rounded,
-                              emphasized: true,
-                            ),
-                            _MetricItem(
-                              title: 'New Hires',
-                              value: '4',
-                              subtitle: 'New employees this month',
-                              icon: Icons.person_add_alt_1_rounded,
-                            ),
-                            _MetricItem(
-                              title: 'Average Tenure',
-                              value: '2.3 yr',
-                              subtitle: 'Average length of time joined',
-                              icon: Icons.timeline_rounded,
-                            ),
-                            _MetricItem(
-                              title: 'Probation',
-                              value: '5',
-                              subtitle: 'Employees in probation period',
-                              icon: Icons.assignment_turned_in_rounded,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isWide = constraints.maxWidth >= 1100;
-                            return Wrap(
-                              spacing: 16,
-                              runSpacing: 16,
-                              children: [
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.46)
-                                      : constraints.maxWidth,
-                                  child: const _BestEmployeeCard(),
-                                ),
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.26)
-                                      : constraints.maxWidth,
-                                  child: const _WorkedHoursCard(),
-                                ),
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.26)
-                                      : constraints.maxWidth,
-                                  child: const _TodayScheduleCard(),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isWide = constraints.maxWidth >= 1100;
-                            return Wrap(
-                              spacing: 16,
-                              runSpacing: 16,
-                              children: [
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.62)
-                                      : constraints.maxWidth,
-                                  child: const _OnboardingTaskCard(),
-                                ),
-                                SizedBox(
-                                  width: isWide
-                                      ? (constraints.maxWidth * 0.36)
-                                      : constraints.maxWidth,
-                                  child: const _ShortcutCard(),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                    child: _buildContent(_selected),
                   ),
                 ),
               ],
@@ -158,32 +82,27 @@ class DashboardScreen extends ConsumerWidget {
       ),
     );
   }
+
+  void showInfo(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
 }
 
-class _Sidebar extends StatefulWidget {
+class _Sidebar extends StatelessWidget {
   final String userName;
   final String roleLabel;
   final ValueChanged<String> onItemSelected;
+  final String selected;
   final VoidCallback onLogout;
 
   const _Sidebar({
     required this.userName,
     required this.roleLabel,
     required this.onItemSelected,
+    required this.selected,
     required this.onLogout,
   });
-
-  @override
-  State<_Sidebar> createState() => _SidebarState();
-}
-
-class _SidebarState extends State<_Sidebar> {
-  String _selected = 'Dashboard';
-
-  void _select(String label) {
-    setState(() => _selected = label);
-    widget.onItemSelected(label);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -254,7 +173,7 @@ class _SidebarState extends State<_Sidebar> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            widget.roleLabel,
+                            roleLabel,
                             style: theme.textTheme.titleSmall?.copyWith(
                               color: colorScheme.onPrimary,
                               fontWeight: FontWeight.w800,
@@ -312,68 +231,32 @@ class _SidebarState extends State<_Sidebar> {
                   _SidebarItem(
                     label: 'Dashboard',
                     icon: Icons.dashboard_outlined,
-                    selected: _selected == 'Dashboard',
-                    onTap: () => _select('Dashboard'),
+                    selected: selected == 'Dashboard',
+                    onTap: () => onItemSelected('Dashboard'),
                   ),
                   _SidebarItem(
                     label: 'Employees',
                     icon: Icons.badge_outlined,
-                    selected: _selected == 'Employees',
-                    onTap: () => _select('Employees'),
+                    selected: selected == 'Employees',
+                    onTap: () => onItemSelected('Employees'),
+                  ),
+                  _SidebarItem(
+                    label: 'Leave',
+                    icon: Icons.event_available_rounded,
+                    selected: selected == 'Leave',
+                    onTap: () => onItemSelected('Leave'),
                   ),
                   _SidebarItem(
                     label: 'Attendance',
                     icon: Icons.access_time_rounded,
-                    selected: _selected == 'Attendance',
-                    onTap: () => _select('Attendance'),
+                    selected: selected == 'Attendance',
+                    onTap: () => onItemSelected('Attendance'),
                   ),
                   _SidebarItem(
-                    label: 'Payroll',
+                    label: 'Payslips',
                     icon: Icons.receipt_long_outlined,
-                    selected: _selected == 'Payroll',
-                    onTap: () => _select('Payroll'),
-                  ),
-                  _SidebarItem(
-                    label: 'Reports & Analytics',
-                    icon: Icons.query_stats_rounded,
-                    selected: _selected == 'Reports & Analytics',
-                    onTap: () => _select('Reports & Analytics'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              _SidebarSection(
-                title: 'TALENT & GROWTH',
-                children: [
-                  _SidebarItem(
-                    label: 'Recruitment',
-                    icon: Icons.how_to_reg_outlined,
-                    selected: _selected == 'Recruitment',
-                    onTap: () => _select('Recruitment'),
-                  ),
-                  _SidebarItem(
-                    label: 'Performance',
-                    icon: Icons.speed_rounded,
-                    selected: _selected == 'Performance',
-                    onTap: () => _select('Performance'),
-                  ),
-                  _SidebarItem(
-                    label: 'Training & Development',
-                    icon: Icons.school_outlined,
-                    selected: _selected == 'Training & Development',
-                    onTap: () => _select('Training & Development'),
-                  ),
-                  _SidebarItem(
-                    label: 'Engagement & Feedback',
-                    icon: Icons.forum_outlined,
-                    selected: _selected == 'Engagement & Feedback',
-                    onTap: () => _select('Engagement & Feedback'),
-                  ),
-                  _SidebarItem(
-                    label: 'Settings',
-                    icon: Icons.settings_outlined,
-                    selected: _selected == 'Settings',
-                    onTap: () => _select('Settings'),
+                    selected: selected == 'Payslips',
+                    onTap: () => onItemSelected('Payslips'),
                   ),
                 ],
               ),
@@ -382,7 +265,7 @@ class _SidebarState extends State<_Sidebar> {
                 children: [
                   Expanded(
                     child: Text(
-                      widget.userName,
+                      userName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -393,7 +276,7 @@ class _SidebarState extends State<_Sidebar> {
                   ),
                   IconButton(
                     tooltip: 'Sign out',
-                    onPressed: widget.onLogout,
+                    onPressed: onLogout,
                     icon: Icon(
                       Icons.logout_rounded,
                       color: colorScheme.onPrimary.withValues(alpha: 230),
@@ -404,6 +287,124 @@ class _SidebarState extends State<_Sidebar> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DashboardOverview extends ConsumerWidget {
+  const _DashboardOverview();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Welcome, ${user?.employee?.firstName ?? 'Admin'}',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Ready to manage your HR tasks today?',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _MetricsGrid(
+            items: const [
+              _MetricItem(
+                title: 'Employees',
+                value: '—',
+                subtitle: 'Employees in your tenant',
+                icon: Icons.people_alt_rounded,
+                emphasized: true,
+              ),
+              _MetricItem(
+                title: 'Pending Leaves',
+                value: '—',
+                subtitle: 'Awaiting approval',
+                icon: Icons.event_available_rounded,
+              ),
+              _MetricItem(
+                title: 'Team Attendance',
+                value: '—',
+                subtitle: 'Records for today',
+                icon: Icons.access_time_rounded,
+              ),
+              _MetricItem(
+                title: 'Payslips',
+                value: '—',
+                subtitle: 'Generated payslips',
+                icon: Icons.receipt_long_outlined,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 1100;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.46)
+                        : constraints.maxWidth,
+                    child: const _BestEmployeeCard(),
+                  ),
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.26)
+                        : constraints.maxWidth,
+                    child: const _WorkedHoursCard(),
+                  ),
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.26)
+                        : constraints.maxWidth,
+                    child: const _TodayScheduleCard(),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 1100;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.62)
+                        : constraints.maxWidth,
+                    child: const _OnboardingTaskCard(),
+                  ),
+                  SizedBox(
+                    width: isWide
+                        ? (constraints.maxWidth * 0.36)
+                        : constraints.maxWidth,
+                    child: const _ShortcutCard(),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -502,12 +503,14 @@ class _SidebarItem extends StatelessWidget {
 
 class _TopBar extends StatelessWidget {
   final String avatarLetter;
+  final String title;
   final VoidCallback onImportData;
   final VoidCallback onOpenMail;
   final VoidCallback onOpenNotifications;
 
   const _TopBar({
     required this.avatarLetter,
+    required this.title,
     required this.onImportData,
     required this.onOpenMail,
     required this.onOpenNotifications,
@@ -530,7 +533,7 @@ class _TopBar extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              'Dashboard',
+              title,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
               ),

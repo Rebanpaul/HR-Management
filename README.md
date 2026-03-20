@@ -30,13 +30,34 @@ Enterprise-grade Human Resource Management System with multi-tenant architecture
 cd backend
 npm install
 cp .env.example .env
-# Edit .env → set your DATABASE_URL (Render PostgreSQL)
+# Edit .env → set your DATABASE_URL (local PostgreSQL for dev, Render PostgreSQL for prod)
 
 npx prisma generate
 npx prisma migrate dev --name init
 npm run db:seed            # Seeds: admin, HR, manager, 2 employees
 npm run start:dev          # http://localhost:3000/api
 ```
+
+#### Database Notes (Local vs Render)
+
+- Local dev: set `DATABASE_URL` like `postgresql://USER:PASSWORD@localhost:5432/hrms_db?schema=public`
+- Render prod: set `DATABASE_URL` to the Render Postgres "Internal Database URL" and keep `sslmode=require`
+- Production migrations (Render): run `npm run prisma:migrate:deploy` during deploy/release
+
+## Deploy (Render)
+
+### Backend API (NestJS)
+
+- Create a **PostgreSQL** instance on Render.
+- Create a **Web Service** from this repo.
+	- Root Directory: `backend`
+	- Build Command: `npm ci && npm run build && npm run prisma:migrate:deploy`
+	- Start Command: `npm run start:prod`
+- Set environment variables in Render:
+	- `DATABASE_URL` (use the Render Postgres *Internal Database URL*)
+	- `JWT_SECRET`, `JWT_REFRESH_SECRET`
+	- `NODE_ENV=production`
+	- `PORT` is provided by Render automatically
 
 **Seed Accounts:**
 

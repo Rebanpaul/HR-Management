@@ -38,7 +38,8 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
   final ApiClient _apiClient;
 
   AttendanceNotifier(this._apiClient) : super(const AttendanceState()) {
-    fetchToday();
+    // Attempt to load today's attendance, but don't crash if backend is down
+    Future.microtask(() => fetchToday());
   }
 
   Future<void> fetchToday() async {

@@ -1,11 +1,20 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer, Controller, Get } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { IdentityModule } from './modules/identity/identity.module';
 import { HrModule } from './modules/hr/hr.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { PayrollModule } from './modules/payroll/payroll.module';
+import { LeaveModule } from './modules/leave/leave.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
+
+@Controller('health')
+class HealthController {
+  @Get()
+  check() {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  }
+}
 
 @Module({
   imports: [
@@ -23,14 +32,17 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     HrModule,
     AttendanceModule,
     PayrollModule,
+    LeaveModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Tenant middleware applied to all routes except auth
+    // Tenant middleware applied to all routes except auth and health
     consumer
       .apply(TenantMiddleware)
-      .exclude('api/auth/(.*)')
+      .exclude('api/auth/(.*)', 'api/health')
       .forRoutes('*');
   }
 }
+

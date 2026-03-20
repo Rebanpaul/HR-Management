@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/attendance_provider.dart';
-import '../providers/payslips_provider.dart';
+import '../../../core/theme/app_theme.dart';
 
 class PortalHomeScreen extends ConsumerWidget {
   final VoidCallback onOpenProfile;
@@ -22,83 +22,64 @@ class PortalHomeScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final user = ref.watch(authProvider).user;
     final attendance = ref.watch(attendanceProvider);
-    final payslips = ref.watch(payslipsProvider);
 
-    ref.listen(attendanceProvider, (prev, next) {
-      final msg = next.successMessage;
-      if (msg != null && msg.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-      }
-      final err = next.error;
-      if (err != null && err.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-      }
-    });
-
-    ref.listen(payslipsProvider, (prev, next) {
-      final err = next.error;
-      if (err != null && err.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-      }
-    });
-
-    final greetingName = user?.employee?.firstName ?? 'Employee';
+    final greetingName = user?.employee?.firstName ?? 'there';
 
     return RefreshIndicator(
       onRefresh: () async {
-        await Future.wait([
-          ref.read(attendanceProvider.notifier).fetchToday(),
-          ref.read(payslipsProvider.notifier).fetchMyPayslips(),
-        ]);
+        await ref.read(attendanceProvider.notifier).fetchToday();
       },
       child: ListView(
         padding: const EdgeInsets.all(0),
         children: [
           Text(
-            'Welcome, $greetingName',
+            'Welcome, $greetingName 👋',
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Ready to manage your HR tasks today?',
+            'Here\'s what\'s happening across your organization.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
-          _MetricsGrid(
-            items: [
-              _MetricItem(
-                title: 'Total Employees',
-                value: '245',
-                subtitle: 'The total number of active employees currently in the company.',
-                icon: Icons.people_alt_rounded,
-                emphasized: true,
-              ),
-              _MetricItem(
-                title: 'New Hires',
-                value: '4',
-                subtitle: 'The number of new employees in the current month.',
-                icon: Icons.person_add_alt_1_rounded,
-              ),
-              _MetricItem(
-                title: 'Average Tenure',
-                value: '2.3 yr',
-                subtitle: 'The average length of time employees joined the company.',
-                icon: Icons.timeline_rounded,
-              ),
-              _MetricItem(
-                title: 'Probation',
-                value: '5',
-                subtitle: 'The number of employees currently in their probation period.',
-                icon: Icons.assignment_turned_in_rounded,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+
+          // ─ Metric Summary Cards ────────────────────────────
+          _MetricsGrid(items: const [
+            _MetricItem(
+              title: 'Total Employees',
+              value: '--',
+              subtitle: 'Connect backend to load.',
+              icon: Icons.people_alt_rounded,
+              emphasized: true,
+            ),
+            _MetricItem(
+              title: 'Present Today',
+              value: '--',
+              subtitle: 'Attendance data loads on connect.',
+              icon: Icons.check_circle_rounded,
+            ),
+            _MetricItem(
+              title: 'Pending Leaves',
+              value: '--',
+              subtitle: 'Leave requests awaiting approval.',
+              icon: Icons.pending_actions_rounded,
+            ),
+            _MetricItem(
+              title: 'Departments',
+              value: '--',
+              subtitle: 'Active departments in organization.',
+              icon: Icons.business_rounded,
+            ),
+          ]),
+
+          const SizedBox(height: 20),
+
+          // ─ Two-column layout ───────────────────────────────
           LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 1100;
@@ -108,65 +89,61 @@ class PortalHomeScreen extends ConsumerWidget {
                 children: [
                   SizedBox(
                     width: isWide
-                        ? (constraints.maxWidth * 0.46)
+                        ? (constraints.maxWidth * 0.58)
                         : constraints.maxWidth,
-                    child: const _BestEmployeeCard(),
+                    child: _AttendanceStatusCard(attendance: attendance),
                   ),
                   SizedBox(
                     width: isWide
-                        ? (constraints.maxWidth * 0.26)
+                        ? (constraints.maxWidth * 0.40)
                         : constraints.maxWidth,
-                    child: const _WorkedHoursCard(),
-                  ),
-                  SizedBox(
-                    width: isWide
-                        ? (constraints.maxWidth * 0.26)
-                        : constraints.maxWidth,
-                    child: const _TodayScheduleCard(),
+                    child: const _QuickActionsCard(),
                   ),
                 ],
               );
             },
           ),
-          const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 1100;
-              return Wrap(
-                spacing: 16,
-                runSpacing: 16,
+
+          const SizedBox(height: 20),
+
+          // ─ Recent Activity ─────────────────────────────────
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: isWide
-                        ? (constraints.maxWidth * 0.62)
-                        : constraints.maxWidth,
-                    child: const _OnboardingTaskCard(),
+                  Text(
+                    'Recent Activity',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                  SizedBox(
-                    width: isWide
-                        ? (constraints.maxWidth * 0.36)
-                        : constraints.maxWidth,
-                    child: _ShortcutCard(
-                      onOpenSalary: onOpenSalary,
-                      onOpenLeave: onOpenLeave,
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.history_rounded,
+                            size: 40,
+                            color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Activity feed will populate once the backend is connected.',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Text(
-                attendance.isLoading || payslips.isLoading
-                    ? 'Loading your attendance and payslip data…'
-                    : 'Tip: Pull to refresh to fetch attendance and payslips.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
               ),
             ),
           ),
@@ -175,6 +152,10 @@ class PortalHomeScreen extends ConsumerWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Internal widgets
+// ─────────────────────────────────────────────────────────────
 
 class _MetricItem {
   final String title;
@@ -194,7 +175,6 @@ class _MetricItem {
 
 class _MetricsGrid extends StatelessWidget {
   final List<_MetricItem> items;
-
   const _MetricsGrid({required this.items});
 
   @override
@@ -214,9 +194,7 @@ class _MetricsGrid extends StatelessWidget {
             mainAxisSpacing: 16,
             childAspectRatio: crossAxisCount == 1 ? 2.8 : 2.4,
           ),
-          itemBuilder: (context, i) {
-            return _MetricCard(item: items[i]);
-          },
+          itemBuilder: (context, i) => _MetricCard(item: items[i]),
         );
       },
     );
@@ -225,7 +203,6 @@ class _MetricsGrid extends StatelessWidget {
 
 class _MetricCard extends StatelessWidget {
   final _MetricItem item;
-
   const _MetricCard({required this.item});
 
   @override
@@ -234,11 +211,11 @@ class _MetricCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final bg = item.emphasized
-        ? colorScheme.primary
+        ? AppTheme.brandPrimary
         : colorScheme.surfaceContainerHighest;
-    final fg = item.emphasized ? colorScheme.onPrimary : colorScheme.onSurface;
+    final fg = item.emphasized ? Colors.white : colorScheme.onSurface;
     final subFg = item.emphasized
-        ? colorScheme.onPrimary.withValues(alpha: 200)
+        ? Colors.white70
         : colorScheme.onSurfaceVariant;
 
     return Card(
@@ -264,7 +241,7 @@ class _MetricCard extends StatelessWidget {
                   height: 32,
                   decoration: BoxDecoration(
                     color: item.emphasized
-                        ? colorScheme.onPrimary.withValues(alpha: 18)
+                        ? Colors.white.withOpacity(0.15)
                         : colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -272,7 +249,7 @@ class _MetricCard extends StatelessWidget {
                     item.icon,
                     size: 18,
                     color: item.emphasized
-                        ? colorScheme.onPrimary
+                        ? Colors.white
                         : colorScheme.onPrimaryContainer,
                   ),
                 ),
@@ -303,8 +280,9 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-class _BestEmployeeCard extends StatelessWidget {
-  const _BestEmployeeCard();
+class _AttendanceStatusCard extends StatelessWidget {
+  final AttendanceState attendance;
+  const _AttendanceStatusCard({required this.attendance});
 
   @override
   Widget build(BuildContext context) {
@@ -313,91 +291,43 @@ class _BestEmployeeCard extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Best Employee',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colorScheme.outlineVariant),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        'This Month',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.keyboard_arrow_down_rounded,
-                          size: 18, color: colorScheme.onSurfaceVariant),
-                    ],
-                  ),
-                ),
-              ],
+            Text(
+              'Today\'s Attendance',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
             ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Container(
-                  width: 170,
-                  height: 170,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: colorScheme.outlineVariant),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.person_rounded,
-                      size: 64,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
+            const SizedBox(height: 16),
+            if (attendance.isLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Rachel Johnson',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 40,
+                        color: colorScheme.onSurfaceVariant.withOpacity(0.3),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 12),
                       Text(
-                        'Marketing Director',
+                        'Connect to backend API to see live attendance data.',
+                        textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      _InfoRow(label: 'Average Work Time', value: '4.2 Years'),
-                      _InfoRow(label: 'Phone', value: '(406) 555-0120'),
-                      _InfoRow(label: 'Email', value: 'r.johnson@mail.com'),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
           ],
         ),
       ),
@@ -405,596 +335,72 @@ class _BestEmployeeCard extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WorkedHoursCard extends StatelessWidget {
-  const _WorkedHoursCard();
+class _QuickActionsCard extends StatelessWidget {
+  const _QuickActionsCard();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Worked Hours',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 92,
-              child: CustomPaint(
-                painter: _SparklinePainter(
-                  lineColor: colorScheme.primary,
-                  fillColor: colorScheme.primary.withValues(alpha: 36),
-                ),
-                child: const SizedBox.expand(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Current Pay Period',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '134h 21m',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'This pay period: Apr 31 – May 15',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Divider(color: colorScheme.outlineVariant),
-            const SizedBox(height: 12),
-            Text(
-              'Previous Pay Period',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '110h 12m',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Prev pay period: Apr 16 – Apr 30',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SparklinePainter extends CustomPainter {
-  final Color lineColor;
-  final Color fillColor;
-
-  _SparklinePainter({
-    required this.lineColor,
-    required this.fillColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const values = <double>[
-      0.25,
-      0.35,
-      0.28,
-      0.45,
-      0.42,
-      0.55,
-      0.50,
-      0.62,
-      0.58,
-      0.72,
-      0.64,
-      0.70,
-      0.60,
-      0.68,
-      0.65,
+    final actions = [
+      ('Approve Leaves', Icons.task_alt_rounded, AppTheme.brandPrimary),
+      ('Create Payslip', Icons.receipt_long_rounded, AppTheme.brandAccent),
+      ('Add Employee', Icons.person_add_rounded, AppTheme.brandTeal),
+      ('View Reports', Icons.analytics_rounded, Colors.orange),
     ];
 
-    final stepX = size.width / (values.length - 1);
-
-    final line = Path();
-    for (var i = 0; i < values.length; i++) {
-      final x = stepX * i;
-      final y = size.height - (values[i] * size.height);
-      if (i == 0) {
-        line.moveTo(x, y);
-      } else {
-        line.lineTo(x, y);
-      }
-    }
-
-    final fill = Path.from(line)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-
-    final fillPaint = Paint()
-      ..color = fillColor
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(fill, fillPaint);
-
-    final linePaint = Paint()
-      ..color = lineColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(line, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SparklinePainter oldDelegate) {
-    return oldDelegate.lineColor != lineColor ||
-        oldDelegate.fillColor != fillColor;
-  }
-}
-
-class _TodayScheduleCard extends StatefulWidget {
-  const _TodayScheduleCard();
-
-  @override
-  State<_TodayScheduleCard> createState() => _TodayScheduleCardState();
-}
-
-class _TodayScheduleCardState extends State<_TodayScheduleCard> {
-  int _selectedDay = 3;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    "Today's Schedule",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text('3 Schedule'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              children: List.generate(5, (i) {
-                final day = i + 1;
-                final selected = day == _selectedDay;
-                return InkWell(
-                  onTap: () => setState(() => _selectedDay = day),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? colorScheme.primary
-                          : colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: selected
-                            ? colorScheme.primary
-                            : colorScheme.outlineVariant,
-                      ),
-                    ),
-                    child: Text(
-                      '$day',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: selected
-                            ? colorScheme.onPrimary
-                            : colorScheme.onSurface,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'September 03, 2025',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const _ScheduleItem(
-              time: '09:00',
-              title: 'Team Sync-Up (Marketing)',
-              range: '09:00 - 11:00',
-            ),
-            const SizedBox(height: 10),
-            const _ScheduleBreak(label: 'Lunch Break', range: '11:00 - 14:00'),
-            const SizedBox(height: 10),
-            const _ScheduleItem(
-              time: '14:00',
-              title: 'Interview with Sarah Lee (Developer)',
-              range: '14:00 - 15:00',
-            ),
-            const SizedBox(height: 10),
-            const _ScheduleItem(
-              time: '16:00',
-              title: 'Monthly Performance Review (Sales Team)',
-              range: '16:00 - 17:00',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ScheduleItem extends StatelessWidget {
-  final String time;
-  final String title;
-  final String range;
-
-  const _ScheduleItem({
-    required this.time,
-    required this.title,
-    required this.range,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 46,
-          child: Text(
-            time,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 16),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: colorScheme.primary.withValues(alpha: 38)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  range,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ScheduleBreak extends StatelessWidget {
-  final String label;
-  final String range;
-
-  const _ScheduleBreak({required this.label, required this.range});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(width: 46),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: colorScheme.outlineVariant),
-            ),
-            child: Center(
-              child: Text(
-                '$label\n$range',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OnboardingTaskCard extends StatelessWidget {
-  const _OnboardingTaskCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Onboarding Task',
+              'Quick Actions',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w900,
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: 0.6,
-                      minHeight: 10,
-                      backgroundColor: colorScheme.surfaceContainerHighest,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '60%',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 12,
-              runSpacing: 10,
-              children: const [
-                _LegendDot(label: 'Completed Task'),
-                _LegendDot(label: 'On Going Task'),
-                _LegendDot(label: 'Waiting Task'),
-                _LegendDot(label: 'Others'),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LegendDot extends StatelessWidget {
-  final String label;
-
-  const _LegendDot({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: colorScheme.primary,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ShortcutCard extends StatelessWidget {
-  final VoidCallback onOpenSalary;
-  final VoidCallback onOpenLeave;
-
-  const _ShortcutCard({
-    required this.onOpenSalary,
-    required this.onOpenLeave,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Shortcut',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: onOpenLeave,
-                  icon: const Icon(Icons.event_rounded),
-                  label: const Text('Leave'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: onOpenSalary,
-                  icon: const Icon(Icons.payments_rounded),
-                  label: const Text('Payslips'),
-                ),
-                IconButton.filledTonal(
-                  onPressed: () {},
-                  icon: const Icon(Icons.add_rounded),
-                ),
-              ],
             ),
             const SizedBox(height: 16),
-            Container(
-              height: 110,
-              decoration: BoxDecoration(
-                color: colorScheme.primary,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Easier with Our\nMobile Apps',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onPrimary,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Download on App Store / Google Play',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onPrimary.withValues(alpha: 200),
+            ...actions.map(
+              (a) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${a.$1} — coming soon.')),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: a.$3.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: a.$3.withOpacity(0.12)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(a.$2, size: 20, color: a.$3),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            a.$1,
+                            style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w700,
+                              color: a.$3,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        Icon(Icons.arrow_forward_ios_rounded,
+                            size: 14, color: a.$3.withOpacity(0.5)),
+                      ],
                     ),
-                    Icon(
-                      Icons.phone_iphone_rounded,
-                      color: colorScheme.onPrimary.withValues(alpha: 220),
-                      size: 42,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

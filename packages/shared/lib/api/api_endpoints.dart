@@ -4,6 +4,9 @@ class ApiEndpoints {
   // Base URL — override per environment
   static String baseUrl = 'http://localhost:3000/api';
 
+  // Health
+  static String get health => '$baseUrl/health';
+
   // Auth
   static String get login => '$baseUrl/auth/login';
   static String get register => '$baseUrl/auth/register';
@@ -24,10 +27,16 @@ class ApiEndpoints {
 
   // Leave Requests
   static String get leaveRequests => '$baseUrl/leave-requests';
+  static String get myLeaves => '$baseUrl/leave-requests/me';
+  static String get leaveBalance => '$baseUrl/leave-requests/balance';
+  static String get teamLeaves => '$baseUrl/leave-requests/team';
   static String leaveRequestById(String id) => '$baseUrl/leave-requests/$id';
+  static String approveLeave(String id) => '$baseUrl/leave-requests/$id/approve';
+  static String rejectLeave(String id) => '$baseUrl/leave-requests/$id/reject';
 
   // Payslips
   static String get payslips => '$baseUrl/payslips';
   static String get myPayslips => '$baseUrl/payslips/me';
   static String payslipById(String id) => '$baseUrl/payslips/$id';
 }
+

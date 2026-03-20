@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shared/shared.dart';
 import '../../attendance/providers/attendance_provider.dart';
 import '../../attendance/widgets/punch_in_widget.dart';
 import '../../salary/providers/payslips_provider.dart';
 import '../../../shared/widgets/portal_header.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../core/theme/app_theme.dart';
 
 class HomeScreen extends ConsumerWidget {
   final VoidCallback? onOpenProfile;
@@ -24,13 +24,10 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
     final attendanceState = ref.watch(attendanceProvider);
-    final payslipsState = ref.watch(payslipsProvider);
 
     final today = DateTime.now();
     final dateLabel = DateFormat('EEEE, MMMM d').format(today);
-
     final clockIn = attendanceState.todayAttendance?.punchIn;
     final clockOut = attendanceState.todayAttendance?.punchOut;
 
@@ -40,157 +37,92 @@ class HomeScreen extends ConsumerWidget {
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: () async {
-          await Future.wait([
-            ref.read(attendanceProvider.notifier).fetchToday(),
-            ref.read(payslipsProvider.notifier).fetchMyPayslips(),
-          ]);
+          await ref.read(attendanceProvider.notifier).fetchToday();
         },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
             PortalHeader(onProfileTap: onOpenProfile),
             const SizedBox(height: 16),
+
+            // Greeting
             Text(
-              'Welcome! Refreshing Monday.',
+              'Hey there 👋',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Great companies are built by great people.',
+              dateLabel,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            // Today's overview card
-            Card(
-              clipBehavior: Clip.antiAlias,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colorScheme.primary,
-                      colorScheme.tertiary,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            // ─ Today's Overview (Glassmorphic gradient card) ─
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.brandPrimary, AppTheme.brandAccent],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Today's Overview",
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            "Today's Overview",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onPrimary,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          fmtTime(clockIn),
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: colorScheme.onPrimary.withValues(alpha: 220),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('d MMM, y').format(today),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      DateFormat('d MMM, y').format(today),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onPrimary.withValues(alpha: 210),
-                        fontWeight: FontWeight.w600,
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _GlassTimeChip(
+                          label: 'Clock In',
+                          value: fmtTime(clockIn),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _OverviewTime(
-                            label: 'Clock In',
-                            value: fmtTime(clockIn),
-                            onPrimary: colorScheme.onPrimary,
-                          ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _GlassTimeChip(
+                          label: 'Clock Out',
+                          value: fmtTime(clockOut),
                         ),
-                        Container(
-                          width: 1,
-                          height: 44,
-                          color: colorScheme.onPrimary.withValues(alpha: 70),
-                        ),
-                        Expanded(
-                          child: _OverviewTime(
-                            label: 'Clock Out',
-                            value: fmtTime(clockOut),
-                            onPrimary: colorScheme.onPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            // Attendance action widget
+            // ─ Punch-in Widget ─
             const PunchInWidget(),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
+            // ─ Leave Balance (from API when connected) ─
             SectionHeader(
-              title: 'Payslip',
-              actionLabel: 'See all',
-              onAction: onOpenSalary,
-            ),
-            const SizedBox(height: 10),
-            _PayslipPreviewCard(
-              isLoading: payslipsState.isLoading,
-              error: payslipsState.error,
-              payslip: payslipsState.latest,
-            ),
-
-            const SizedBox(height: 20),
-
-            SectionHeader(
-              title: "What's up Today",
-              actionLabel: 'See all',
-              onAction: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tasks & reviews coming soon.')),
-                );
-              },
-            ),
-            const SizedBox(height: 10),
-            _SimpleListCard(
-              items: const [
-                _SimpleItem(
-                  title: 'Performance Review',
-                  subtitle: '10:00 AM - 10:30 AM',
-                  icon: Icons.stars_rounded,
-                ),
-                _SimpleItem(
-                  title: 'Team Standup',
-                  subtitle: '11:00 AM - 11:15 AM',
-                  icon: Icons.groups_rounded,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            SectionHeader(
-              title: 'Leave balance',
+              title: 'Leave Balance',
               actionLabel: 'Apply',
               onAction: onOpenLeave,
             ),
@@ -198,46 +130,53 @@ class HomeScreen extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: _MetricTile(
+                  child: _GlassMetricTile(
                     label: 'Casual',
-                    value: '8',
-                    color: colorScheme.primary,
+                    value: '--',
+                    color: AppTheme.brandPrimary,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _MetricTile(
+                  child: _GlassMetricTile(
                     label: 'Sick',
-                    value: '5',
-                    color: colorScheme.tertiary,
+                    value: '--',
+                    color: AppTheme.brandAccent,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _MetricTile(
+                  child: _GlassMetricTile(
                     label: 'Earned',
-                    value: '12',
-                    color: colorScheme.secondary,
+                    value: '--',
+                    color: AppTheme.brandTeal,
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
+            // ─ Payslip Preview ─
             SectionHeader(
-              title: 'Upcoming holidays',
+              title: 'Latest Payslip',
+              actionLabel: 'View all',
+              onAction: onOpenSalary,
+            ),
+            const SizedBox(height: 10),
+            _PayslipPlaceholderCard(),
+
+            const SizedBox(height: 24),
+
+            // ─ Upcoming ─
+            SectionHeader(
+              title: 'Upcoming',
               actionLabel: dateLabel,
             ),
             const SizedBox(height: 10),
-            _SimpleListCard(
-              items: const [
-                _SimpleItem(
-                  title: 'Public Holiday',
-                  subtitle: 'Next Friday',
-                  icon: Icons.celebration_rounded,
-                ),
-              ],
+            _EmptyStateCard(
+              icon: Icons.celebration_outlined,
+              text: 'No upcoming events.',
             ),
           ],
         ),
@@ -246,105 +185,112 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _OverviewTime extends StatelessWidget {
+// ─────────────────────────────────────────────────────────
+// Glass Widgets
+// ─────────────────────────────────────────────────────────
+
+class _GlassTimeChip extends StatelessWidget {
   final String label;
   final String value;
-  final Color onPrimary;
 
-  const _OverviewTime({
-    required this.label,
-    required this.value,
-    required this.onPrimary,
-  });
+  const _GlassTimeChip({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: onPrimary.withValues(alpha: 210),
-            fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(0.18)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: Colors.white70,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: onPrimary,
-            fontWeight: FontWeight.w900,
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _PayslipPreviewCard extends StatelessWidget {
-  final bool isLoading;
-  final String? error;
-  final PayslipModel? payslip;
+class _GlassMetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
 
-  const _PayslipPreviewCard({
-    required this.isLoading,
-    required this.error,
-    required this.payslip,
+  const _GlassMetricTile({
+    required this.label,
+    required this.value,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.15)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.calendar_today_rounded, size: 16, color: color),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: color.withOpacity(0.8),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PayslipPlaceholderCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final currentPayslip = payslip;
-
-    if (isLoading) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: 12),
-              Text('Loading payslip...'),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (error != null) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(Icons.error_outline, color: colorScheme.error),
-              const SizedBox(width: 12),
-              Expanded(child: Text(error!)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (currentPayslip == null) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text('No payslips yet.'),
-        ),
-      );
-    }
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Row(
           children: [
             Container(
@@ -359,32 +305,17 @@ class _PayslipPreviewCard extends StatelessWidget {
                 color: colorScheme.onSecondaryContainer,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    currentPayslip.periodFormatted,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Net salary: ${currentPayslip.netSalary.toStringAsFixed(2)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              child: Text(
+                'Connect your backend to view payslips.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -392,16 +323,11 @@ class _PayslipPreviewCard extends StatelessWidget {
   }
 }
 
-class _MetricTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
+class _EmptyStateCard extends StatelessWidget {
+  final IconData icon;
+  final String text;
 
-  const _MetricTile({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _EmptyStateCard({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -410,38 +336,14 @@ class _MetricTile extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 26),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.circle,
-                    size: 14,
-                    color: color,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  value,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
+            Icon(icon, color: colorScheme.onSurfaceVariant.withOpacity(0.4), size: 36),
             const SizedBox(height: 10),
             Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
               ),
@@ -451,65 +353,4 @@ class _MetricTile extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SimpleListCard extends StatelessWidget {
-  final List<_SimpleItem> items;
-
-  const _SimpleListCard({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      child: Column(
-        children: [
-          for (int i = 0; i < items.length; i++) ...[
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(items[i].icon, color: colorScheme.primary),
-              ),
-              title: Text(
-                items[i].title,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: Text(
-                items[i].subtitle,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              trailing: const Icon(Icons.more_vert_rounded),
-              onTap: () {},
-            ),
-            if (i != items.length - 1)
-              Divider(height: 1, color: colorScheme.outlineVariant),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SimpleItem {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  const _SimpleItem({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
 }

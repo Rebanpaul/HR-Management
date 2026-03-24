@@ -41,8 +41,8 @@ export class LoginDto {
   password: string;
 
   @IsString()
-  @IsNotEmpty()
-  tenantId: string;
+  @IsOptional()
+  tenantId?: string;
 }
 
 export class RefreshTokenDto {

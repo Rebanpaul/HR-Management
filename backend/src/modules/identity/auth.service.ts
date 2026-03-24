@@ -97,17 +97,26 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email_tenantId: {
-          email: dto.email,
-          tenantId: dto.tenantId,
+    let user;
+
+    if (dto.tenantId) {
+      // If tenant ID is provided, strictly search by both
+      user = await this.prisma.user.findUnique({
+        where: {
+          email_tenantId: {
+            email: dto.email,
+            tenantId: dto.tenantId,
+          },
         },
-      },
-      include: {
-        employee: true,
-      },
-    });
+        include: { employee: true },
+      });
+    } else {
+      // For internal use: find the user purely by email
+      user = await this.prisma.user.findFirst({
+        where: { email: dto.email },
+        include: { employee: true },
+      });
+    }
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');

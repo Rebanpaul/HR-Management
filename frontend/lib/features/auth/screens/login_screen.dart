@@ -129,17 +129,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         key: _formKey,
                         child: Column(
                           children: [
-                            TextFormField(
-                              controller: _tenantIdController,
-                              decoration: const InputDecoration(
-                                labelText: 'Organization ID',
-                                prefixIcon: Icon(Icons.business_rounded),
-                              ),
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? 'Required'
-                                  : null,
-                            ),
-                            const SizedBox(height: 16),
+                            // --- TEMPORARILY HIDDEN FOR INTERNAL USE ---
+                            // TextFormField(
+                            //   controller: _tenantIdController,
+                            //   decoration: const InputDecoration(
+                            //     labelText: 'Organization ID',
+                            //     prefixIcon: Icon(Icons.business_rounded),
+                            //   ),
+                            //   validator: (v) => v == null || v.trim().isEmpty
+                            //       ? 'Required'
+                            //       : null,
+                            // ),
+                            // const SizedBox(height: 16),
+                            // -------------------------------------------
                             TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,

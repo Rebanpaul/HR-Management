@@ -27,43 +27,58 @@ class AttendanceAdminScreen extends ConsumerWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+            final header = [
+              Expanded(
+                flex: isMobile ? 0 : 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Attendance',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'View team attendance for a date.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isMobile) const SizedBox(height: 16),
+              Row(
                 children: [
-                  Text(
-                    'Attendance',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                  OutlinedButton.icon(
+                    onPressed: state.isLoading ? null : pickDate,
+                    icon: const Icon(Icons.calendar_month_rounded),
+                    label: Text(DateFormat('MMM d, y').format(state.date)),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'View team attendance for a date.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  const SizedBox(width: 10),
+                  IconButton.filledTonal(
+                    tooltip: 'Refresh',
+                    onPressed: state.isLoading
+                        ? null
+                        : () {
+                            ref.read(teamAttendanceProvider.notifier).fetch();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Refreshing attendance data...')),
+                            );
+                          },
+                    icon: const Icon(Icons.refresh_rounded),
                   ),
                 ],
               ),
-            ),
-            OutlinedButton.icon(
-              onPressed: state.isLoading ? null : pickDate,
-              icon: const Icon(Icons.calendar_month_rounded),
-              label: Text(DateFormat('MMM d, y').format(state.date)),
-            ),
-            const SizedBox(width: 10),
-            IconButton.filledTonal(
-              tooltip: 'Refresh',
-              onPressed: state.isLoading
-                  ? null
-                  : () => ref.read(teamAttendanceProvider.notifier).fetch(),
-              icon: const Icon(Icons.refresh_rounded),
-            ),
-          ],
+            ];
+            return isMobile ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: header) : Row(children: header);
+          }
         ),
         const SizedBox(height: 16),
         if (state.error != null)

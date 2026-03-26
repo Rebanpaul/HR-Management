@@ -28,7 +28,11 @@ class EngageAdminScreen extends StatelessWidget {
                         Text('Announcements', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
                         const Spacer(),
                         TextButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Opening Announcement Editor...')),
+                            );
+                          },
                           icon: const Icon(Icons.add_rounded, size: 16),
                           label: const Text('New Post'),
                         ),
@@ -45,7 +49,11 @@ class EngageAdminScreen extends StatelessWidget {
                         Text('Recent Polls', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
                         const Spacer(),
                         TextButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Opening Poll Creation Tool...')),
+                            );
+                          },
                           icon: const Icon(Icons.add_rounded, size: 16),
                           label: const Text('Create Poll'),
                         ),

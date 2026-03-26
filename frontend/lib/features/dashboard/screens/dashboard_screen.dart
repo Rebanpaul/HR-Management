@@ -21,9 +21,15 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String _selected = 'Home';
 
-  void _select(String label) => setState(() => _selected = label);
+  void _select(String label) {
+    setState(() => _selected = label);
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+      Navigator.pop(context);
+    }
+  }
 
   Widget _buildContent() {
     switch (_selected) {
@@ -46,36 +52,79 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final fullName = user?.employee?.fullName ?? 'Administrator';
     final avatarLetter = (user?.employee?.firstName ?? 'A').substring(0, 1).toUpperCase();
 
-    return Scaffold(
-      backgroundColor: AppColors.bgLight,
-      body: Row(
-        children: [
-          // ── Sidebar (Deep Navy) ──────────────────────────────────
-          _Sidebar(
-            selected: _selected,
-            userName: fullName,
-            avatarLetter: avatarLetter,
-            onItemSelected: _select,
-          ),
-          // ── Main Content Area ────────────────────────────────────
-          Expanded(
-            child: Column(
-              children: [
-                _TopBar(
-                  avatarLetter: avatarLetter,
-                  userName: fullName,
-                  title: _selected,
-                  onLogout: () => ref.read(authProvider.notifier).logout(),
-                ),
-                Expanded(
-                  child: _buildContent(),
-                ),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 1100;
+
+        return Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: AppColors.bgLight,
+          drawer: isMobile ? Container(
+            width: 260,
+            color: AppColors.navyDeep,
+            child: _Sidebar(
+              selected: _selected,
+              userName: fullName,
+              avatarLetter: avatarLetter,
+              onItemSelected: _select,
             ),
+          ) : null,
+          body: Row(
+            children: [
+              // ── Sidebar (Desktop Only) ──────────────────────────
+              if (!isMobile)
+                _Sidebar(
+                  selected: _selected,
+                  userName: fullName,
+                  avatarLetter: avatarLetter,
+                  onItemSelected: _select,
+                ),
+              // ── Main Content Area ────────────────────────────────────
+              Expanded(
+                child: Column(
+                  children: [
+                    _TopBar(
+                      avatarLetter: avatarLetter,
+                      userName: fullName,
+                      title: _selected,
+                      isMobile: isMobile,
+                      onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                      onLogout: () => ref.read(authProvider.notifier).logout(),
+                    ),
+                    Expanded(
+                      child: _buildContent(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+          bottomNavigationBar: isMobile ? BottomNavigationBar(
+            currentIndex: _getBottomNavIndex(),
+            onTap: (index) {
+              final labels = ['Home', 'Employee', 'Payroll'];
+              _select(labels[index]);
+            },
+            selectedItemColor: AppColors.actionBlue,
+            unselectedItemColor: AppColors.slateGray,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Home'),
+              BottomNavigationBarItem(icon: Icon(Icons.people_alt_rounded), label: 'Employees'),
+              BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded), label: 'Payroll'),
+            ],
+          ) : null,
+        );
+      }
     );
+  }
+
+  int _getBottomNavIndex() {
+    switch (_selected) {
+      case 'Employee': return 1;
+      case 'Payroll': return 2;
+      case 'Home':
+      default: return 0;
+    }
   }
 }
 
@@ -260,9 +309,18 @@ class _TopBar extends StatelessWidget {
   final String avatarLetter;
   final String userName;
   final String title;
+  final bool isMobile;
+  final VoidCallback onMenuTap;
   final VoidCallback onLogout;
 
-  const _TopBar({required this.avatarLetter, required this.userName, required this.title, required this.onLogout});
+  const _TopBar({
+    required this.avatarLetter,
+    required this.userName,
+    required this.title,
+    required this.isMobile,
+    required this.onMenuTap,
+    required this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -275,33 +333,40 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (isMobile) 
+            IconButton(
+              icon: const Icon(Icons.menu_rounded, color: AppColors.navyDeep),
+              onPressed: onMenuTap,
+            ),
+          if (isMobile) const SizedBox(width: 8),
           Text(title, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navyDeep, letterSpacing: -0.5)),
           const Spacer(),
-          // Global Search
-          Container(
-            width: 240,
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: AppColors.bgLight,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.borderSubtle),
+          // Global Search (Desktop Only)
+          if (!isMobile)
+            Container(
+              width: 240,
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppColors.bgLight,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search_rounded, size: 16, color: AppColors.slateGray),
+                  const SizedBox(width: 8),
+                  Text('Search anywhere...', style: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted)),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(4), border: Border.all(color: AppColors.border)),
+                    child: Text('⌘K', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.slateGray)),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                const Icon(Icons.search_rounded, size: 16, color: AppColors.slateGray),
-                const SizedBox(width: 8),
-                Text('Search anywhere...', style: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted)),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(4), border: Border.all(color: AppColors.border)),
-                  child: Text('⌘K', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.slateGray)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
+          if (!isMobile) const SizedBox(width: 16),
           // Notification Bell
           Stack(
             clipBehavior: Clip.none,
@@ -313,9 +378,11 @@ class _TopBar extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(width: 8),
-          const VerticalDivider(width: 1, indent: 16, endIndent: 16, color: AppColors.border),
-          const SizedBox(width: 16),
+          if (!isMobile) ...[
+            const SizedBox(width: 8),
+            const VerticalDivider(width: 1, indent: 16, endIndent: 16, color: AppColors.border),
+            const SizedBox(width: 16),
+          ],
           // Profile Dropdown
           PopupMenuButton<String>(
             offset: const Offset(0, 40),
@@ -351,6 +418,11 @@ class _HomeDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 900;
+    final availableWidth = isMobile ? screenWidth - 48 : screenWidth - 260 - 48; // Sidebar + Padding
+    final contentWidth = availableWidth - (isMobile ? 0 : 24); // Account for spacing in Row layout
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -360,141 +432,180 @@ class _HomeDashboard extends StatelessWidget {
           Row(
             children: [
               Text('Recent: ', style: GoogleFonts.inter(fontSize: 13, color: AppColors.slateGray)),
-              _RecentTab(label: 'Leave Approvals'),
+              const _RecentTab(label: 'Leave Approvals'),
               const SizedBox(width: 8),
-              _RecentTab(label: 'Payroll Inputs (Mar)'),
-              const Spacer(),
-              Text(DateFormat('EEEE, MMMM d').format(DateTime.now()), style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.slateGray)),
+              const _RecentTab(label: 'Payroll Inputs (Mar)'),
+              if (!isMobile) const Spacer(),
+              if (!isMobile)
+                Text(DateFormat('EEEE, MMMM d').format(DateTime.now()), style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.slateGray)),
             ],
           ),
           const SizedBox(height: 24),
 
-          // Main 2-column layout
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left Column (Metrics, Favorites, Live Status)
-              Expanded(
-                flex: 7,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // KPI Row
-                    Row(
-                      children: [
-                        Expanded(child: _KpiCard(title: 'Active Employees', value: '142', trend: '+3 this month', isPositive: true)),
-                        const SizedBox(width: 16),
-                        Expanded(child: _KpiCard(title: 'Leaves Pending', value: '3', trend: 'Requires action', isWarning: true)),
-                        const SizedBox(width: 16),
-                        Expanded(child: _KpiCard(title: 'Attendance Today', value: '94%', trend: 'Avg arrival 9:02 AM')),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Pinned Favorites Grid
-                    Text('Pinned Favorites', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
-                    const SizedBox(height: 12),
-                    GridView.count(
-                      crossAxisCount: 3,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 2.2,
-                      children: const [
-                        _FavoriteCard(icon: Icons.person_add_rounded, title: 'Onboard Employee', color: AppColors.actionBlue),
-                        _FavoriteCard(icon: Icons.receipt_rounded, title: 'Process Payroll', color: AppColors.green),
-                        _FavoriteCard(icon: Icons.assignment_turned_in_rounded, title: 'Approve Leaves', color: AppColors.amber),
-                        _FavoriteCard(icon: Icons.bar_chart_rounded, title: 'Q1 Reports', color: AppColors.purple),
-                        _FavoriteCard(icon: Icons.settings_rounded, title: 'Update Policies', color: AppColors.slateGray),
-                        _FavoriteCard(icon: Icons.add_rounded, title: 'Add Shortcut', isAdd: true),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                    
-                    // Who is In (Live Status)
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
-                                  const SizedBox(width: 8),
-                                  Text('Who Is In', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
-                                ],
-                              ),
-                              TextButton(onPressed: (){}, child: Text('View Details', style: GoogleFonts.inter(fontSize: 12, color: AppColors.actionBlue, fontWeight: FontWeight.w600))),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              _WhoIsInColumn('Present', [('JS', AppColors.green), ('AW', AppColors.green), ('MK', AppColors.green), ('+', AppColors.bgLight)]),
-                              const SizedBox(width: 32),
-                              _WhoIsInColumn('On Leave', [('RB', AppColors.amber), ('LN', AppColors.amber)]),
-                              const SizedBox(width: 32),
-                              _WhoIsInColumn('Absent', [('DW', AppColors.red)]),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+          // Main column layout (Responsive)
+          if (isMobile)
+            Column(
+              children: [
+                _buildMainColumn(context),
+                const SizedBox(height: 24),
+                _buildSideColumn(),
+              ],
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: (contentWidth * 0.7).clamp(300, 1200),
+                  child: _buildMainColumn(context),
                 ),
-              ),
-              
-              const SizedBox(width: 24),
-              
-              // Right Column (Calendar & Recent Feed)
-              Expanded(
-                flex: 3,
-                child: Column(
-                  children: [
-                    const _InteractiveCalendar(),
-                    const SizedBox(height: 24),
-                    
-                    // Activity Feed
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Recent Activity', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
-                          const SizedBox(height: 16),
-                          _ActivityItem(title: 'John Smith applied for Sick Leave', time: '10 mins ago', iconColor: AppColors.amber),
-                          _ActivityItem(title: 'Payroll verified for Engineering', time: '2 hours ago', iconColor: AppColors.green),
-                          _ActivityItem(title: 'New policy document uploaded', time: 'Yesterday', iconColor: AppColors.actionBlue),
-                        ],
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 24),
+                SizedBox(
+                  width: (contentWidth * 0.3).clamp(200, 400),
+                  child: _buildSideColumn(),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           
           const SizedBox(height: 32),
           // Footer
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
             children: [
               Text('Help & Documentation', style: GoogleFonts.inter(fontSize: 12, color: AppColors.actionBlue, decoration: TextDecoration.underline)),
-              Text(' • ', style: GoogleFonts.inter(fontSize: 12, color: AppColors.slateGray)),
+              Text('•', style: GoogleFonts.inter(fontSize: 12, color: AppColors.slateGray)),
               Text('Submit Feedback', style: GoogleFonts.inter(fontSize: 12, color: AppColors.slateGray)),
-              Text(' • ', style: GoogleFonts.inter(fontSize: 12, color: AppColors.slateGray)),
+              Text('•', style: GoogleFonts.inter(fontSize: 12, color: AppColors.slateGray)),
               Text('System Status: All Operational', style: GoogleFonts.inter(fontSize: 12, color: AppColors.green)),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMainColumn(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // KPI Row
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+            if (isMobile) {
+              return Column(
+                children: [
+                  _KpiCard(title: 'Active Employees', value: '142', trend: '+3 this month', isPositive: true),
+                  const SizedBox(height: 16),
+                  _KpiCard(title: 'Leaves Pending', value: '3', trend: 'Requires action', isWarning: true),
+                  const SizedBox(height: 16),
+                  _KpiCard(title: 'Attendance Today', value: '94%', trend: 'Avg arrival 9:02 AM'),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: _KpiCard(title: 'Active Employees', value: '142', trend: '+3 this month', isPositive: true)),
+                const SizedBox(width: 16),
+                Expanded(child: _KpiCard(title: 'Leaves Pending', value: '3', trend: 'Requires action', isWarning: true)),
+                const SizedBox(width: 16),
+                Expanded(child: _KpiCard(title: 'Attendance Today', value: '94%', trend: 'Avg arrival 9:02 AM')),
+              ],
+            );
+          }
+        ),
+        const SizedBox(height: 24),
+
+        // Pinned Favorites Grid
+        Text('Pinned Favorites', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final crossAxisCount = constraints.maxWidth > 800 ? 3 : (constraints.maxWidth > 400 ? 2 : 1);
+            return GridView.count(
+              crossAxisCount: crossAxisCount,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 2.5,
+              children: const [
+                _FavoriteCard(icon: Icons.person_add_rounded, title: 'Onboard Employee', color: AppColors.actionBlue),
+                _FavoriteCard(icon: Icons.receipt_rounded, title: 'Process Payroll', color: AppColors.green),
+                _FavoriteCard(icon: Icons.assignment_turned_in_rounded, title: 'Approve Leaves', color: AppColors.amber),
+                _FavoriteCard(icon: Icons.bar_chart_rounded, title: 'Q1 Reports', color: AppColors.purple),
+                _FavoriteCard(icon: Icons.settings_rounded, title: 'Update Policies', color: AppColors.slateGray),
+                _FavoriteCard(icon: Icons.add_rounded, title: 'Add Shortcut', isAdd: true),
+              ],
+            );
+          }
+        ),
+
+        const SizedBox(height: 24),
+        
+        // Who is In (Live Status)
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
+                      Text('Who Is In', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
+                    ],
+                  ),
+                  TextButton(onPressed: (){}, child: Text('View Details', style: GoogleFonts.inter(fontSize: 12, color: AppColors.actionBlue, fontWeight: FontWeight.w600))),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _WhoIsInColumn('Present', [('JS', AppColors.green), ('AW', AppColors.green), ('MK', AppColors.green), ('+', AppColors.bgLight)]),
+                    const SizedBox(width: 32),
+                    _WhoIsInColumn('On Leave', [('RB', AppColors.amber), ('LN', AppColors.amber)]),
+                    const SizedBox(width: 32),
+                    _WhoIsInColumn('Absent', [('DW', AppColors.red)]),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSideColumn() {
+    return Column(
+      children: [
+        const _InteractiveCalendar(),
+        const SizedBox(height: 24),
+        
+        // Activity Feed
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Recent Activity', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
+              const SizedBox(height: 16),
+              _ActivityItem(title: 'John Smith applied for Sick Leave', time: '10 mins ago', iconColor: AppColors.amber),
+              _ActivityItem(title: 'Payroll verified for Engineering', time: '2 hours ago', iconColor: AppColors.green),
+              _ActivityItem(title: 'New policy document uploaded', time: 'Yesterday', iconColor: AppColors.actionBlue),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -613,8 +724,8 @@ class _WhoIsInColumn extends StatelessWidget {
         Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.slateGray)),
         const SizedBox(height: 10),
         Row(
-          children: avatars.map((a) => Padding(
-            padding: const EdgeInsets.only(right: -8.0),
+          children: avatars.map((a) => Align(
+            widthFactor: 0.7,
             child: Container(
               decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.surface, width: 2)),
               child: CircleAvatar(

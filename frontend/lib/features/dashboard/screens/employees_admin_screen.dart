@@ -51,27 +51,39 @@ class _EmployeesAdminScreenState extends State<EmployeesAdminScreen>
                     ),
                   ),
                   // Action buttons
-                  OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.file_upload_outlined, size: 16),
-                    label: const Text('Import'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.slateGray,
-                      side: const BorderSide(color: AppColors.border),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: () => _showAddEmployeeDialog(context),
-                    icon: const Icon(Icons.person_add_rounded, size: 16),
-                    label: const Text('Add Employee'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.actionBlue,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isMobile = MediaQuery.of(context).size.width < 600;
+                      final actions = [
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Importing employee data...')),
+                            );
+                          },
+                          icon: const Icon(Icons.file_upload_outlined, size: 16),
+                          label: const Text('Import'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.slateGray,
+                            side: const BorderSide(color: AppColors.border),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        if (!isMobile) const SizedBox(width: 8) else const SizedBox(height: 8),
+                        FilledButton.icon(
+                          onPressed: () => _showAddEmployeeDialog(context),
+                          icon: const Icon(Icons.person_add_rounded, size: 16),
+                          label: const Text('Add Employee'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.actionBlue,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ];
+                      return isMobile ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: actions) : Row(children: actions);
+                    }
                   ),
                 ],
               ),
@@ -134,7 +146,12 @@ class _EmployeesAdminScreenState extends State<EmployeesAdminScreen>
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           FilledButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Employee profile created successfully!')),
+              );
+            },
             style: FilledButton.styleFrom(backgroundColor: AppColors.actionBlue),
             child: const Text('Create Employee'),
           ),
@@ -170,6 +187,7 @@ class _MainTabState extends State<_MainTab> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
     final filtered = _employees.where((e) {
       final matchSearch = e.name.toLowerCase().contains(_searchQuery.toLowerCase());
       final matchDept = _selectedDept == 'All' || e.dept == _selectedDept;
@@ -182,50 +200,56 @@ class _MainTabState extends State<_MainTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Filters Row
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: SizedBox(
-                  height: 40,
-                  child: TextField(
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    style: GoogleFonts.inter(fontSize: 13),
-                    decoration: InputDecoration(
-                      hintText: 'Search employees...',
-                      hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted),
-                      prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppColors.slateGray),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.actionBlue, width: 2)),
-                      filled: true, fillColor: AppColors.surface,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              final filterRow = [
+                Expanded(
+                  flex: isMobile ? 0 : 3,
+                  child: SizedBox(
+                    height: 48,
+                    child: TextField(
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      style: GoogleFonts.inter(fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Search employees...',
+                        hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted),
+                        prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppColors.slateGray),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.actionBlue, width: 2)),
+                        filled: true, fillColor: AppColors.surface,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: SizedBox(
-                  height: 40,
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedDept,
-                    style: GoogleFonts.inter(fontSize: 13, color: AppColors.navyDeep),
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
-                      filled: true, fillColor: AppColors.surface,
+                if (isMobile) const SizedBox(height: 12) else const SizedBox(width: 12),
+                Expanded(
+                  flex: isMobile ? 0 : 2,
+                  child: SizedBox(
+                    height: 48,
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedDept,
+                      style: GoogleFonts.inter(fontSize: 13, color: AppColors.navyDeep),
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                        filled: true, fillColor: AppColors.surface,
+                      ),
+                      items: _depts.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                      onChanged: (d) => setState(() => _selectedDept = d ?? 'All'),
                     ),
-                    items: _depts.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
-                    onChanged: (d) => setState(() => _selectedDept = d ?? 'All'),
                   ),
                 ),
-              ),
-              const Spacer(),
-              Text('${filtered.length} Results', style: GoogleFonts.inter(fontSize: 13, color: AppColors.slateGray, fontWeight: FontWeight.w500)),
-            ],
+                if (!isMobile) const Spacer(),
+                if (isMobile) const SizedBox(height: 8),
+                Text('${filtered.length} Results', style: GoogleFonts.inter(fontSize: 13, color: AppColors.slateGray, fontWeight: FontWeight.w500)),
+              ];
+
+              return isMobile ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: filterRow) : Row(children: filterRow);
+            }
           ),
           const SizedBox(height: 16),
           // Table
@@ -236,35 +260,45 @@ class _MainTabState extends State<_MainTab> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
               ),
-              child: Column(
-                children: [
-                  // Table Header
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: const BoxDecoration(
-                      color: AppColors.bgLight,
-                      borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
-                      border: Border(bottom: BorderSide(color: AppColors.border)),
-                    ),
-                    child: Row(
-                      children: [
-                        _TableHeaderCell('Name', flex: 3),
-                        _TableHeaderCell('Department', flex: 2),
-                        _TableHeaderCell('Designation', flex: 2),
-                        _TableHeaderCell('Status', flex: 2),
-                        _TableHeaderCell('Actions', flex: 1),
-                      ],
-                    ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: isMobile ? 800 : (MediaQuery.of(context).size.width > 1100 ? MediaQuery.of(context).size.width - 300 : 800),
+                  child: Column(
+                    children: [
+                      // Table Header
+                      Container(
+                        width: isMobile ? 800 : (MediaQuery.of(context).size.width > 1100 ? MediaQuery.of(context).size.width - 300 : 800),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        decoration: const BoxDecoration(
+                          color: AppColors.bgLight,
+                          borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+                          border: Border(bottom: BorderSide(color: AppColors.border)),
+                        ),
+                        child: Row(
+                          children: [
+                            _TableHeaderCell('Name', flex: 3),
+                            _TableHeaderCell('Department', flex: 2),
+                            _TableHeaderCell('Designation', flex: 2),
+                            _TableHeaderCell('Status', flex: 2),
+                            _TableHeaderCell('Actions', flex: 1),
+                          ],
+                        ),
+                      ),
+                      // Table Rows
+                      Expanded(
+                        child: SizedBox(
+                          width: isMobile ? 800 : (MediaQuery.of(context).size.width > 1100 ? MediaQuery.of(context).size.width - 300 : 800),
+                          child: ListView.separated(
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderSubtle),
+                            itemBuilder: (_, i) => _EmployeeTableRow(employee: filtered[i]),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  // Table Rows
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderSubtle),
-                      itemBuilder: (_, i) => _EmployeeTableRow(employee: filtered[i]),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -340,8 +374,28 @@ class _EmployeeTableRow extends StatelessWidget {
             flex: 1,
             child: Row(
               children: [
-                IconButton(icon: const Icon(Icons.visibility_outlined, size: 16, color: AppColors.slateGray), onPressed: () {}, tooltip: 'View', padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 32, minHeight: 32)),
-                IconButton(icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.slateGray), onPressed: () {}, tooltip: 'Edit', padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 32, minHeight: 32)),
+                IconButton(
+                  icon: const Icon(Icons.visibility_outlined, size: 16, color: AppColors.slateGray), 
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Viewing profile: ${employee.name}')),
+                    );
+                  }, 
+                  tooltip: 'View', 
+                  padding: EdgeInsets.zero, 
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32)
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.slateGray), 
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Opening editor for: ${employee.name}')),
+                    );
+                  }, 
+                  tooltip: 'Edit', 
+                  padding: EdgeInsets.zero, 
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32)
+                ),
               ],
             ),
           ),
@@ -379,29 +433,50 @@ class _InformationTabState extends State<_InformationTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left vertical sub-menu
-        Container(
-          width: 220,
-          decoration: const BoxDecoration(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 700;
+        final menu = Container(
+          width: isMobile ? double.infinity : 220,
+          decoration: BoxDecoration(
             color: AppColors.surface,
-            border: Border(right: BorderSide(color: AppColors.border)),
+            border: Border(
+              right: isMobile ? BorderSide.none : const BorderSide(color: AppColors.border),
+              bottom: isMobile ? const BorderSide(color: AppColors.border) : BorderSide.none,
+            ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text('Information', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.slateGray, letterSpacing: 0.6)),
               ),
-              ..._subSections.map((s) => _SubMenuItem(icon: s.$2, label: s.$1, selected: _selected == s.$1, onTap: () => setState(() => _selected = s.$1))),
+              if (isMobile) 
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _subSections.map((s) => _SubMenuItem(
+                      icon: s.$2, 
+                      label: s.$1, 
+                      selected: _selected == s.$1, 
+                      onTap: () => setState(() => _selected = s.$1),
+                      isMobile: true,
+                    )).toList(),
+                  ),
+                )
+              else 
+                ..._subSections.map((s) => _SubMenuItem(icon: s.$2, label: s.$1, selected: _selected == s.$1, onTap: () => setState(() => _selected = s.$1))),
             ],
           ),
-        ),
-        // Right content area
-        Expanded(child: _buildContent()),
-      ],
+        );
+
+        final content = Expanded(child: _buildContent());
+
+        return isMobile 
+          ? Column(children: [menu, content]) 
+          : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [menu, content]);
+      }
     );
   }
 }
@@ -411,14 +486,15 @@ class _SubMenuItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _SubMenuItem({required this.icon, required this.label, required this.selected, required this.onTap});
+  final bool isMobile;
+  const _SubMenuItem({required this.icon, required this.label, required this.selected, required this.onTap, this.isMobile = false});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        margin: EdgeInsets.symmetric(horizontal: isMobile ? 4 : 8, vertical: isMobile ? 8 : 2),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: selected ? AppColors.actionBlue.withOpacity(0.08) : Colors.transparent,
@@ -426,6 +502,7 @@ class _SubMenuItem extends StatelessWidget {
           border: selected ? Border.all(color: AppColors.actionBlue.withOpacity(0.2)) : null,
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 16, color: selected ? AppColors.actionBlue : AppColors.slateGray),
             const SizedBox(width: 10),
@@ -478,7 +555,11 @@ class _PersonalDetailsView extends StatelessWidget {
                 ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Editing profile details...')),
+                    );
+                  },
                   style: FilledButton.styleFrom(backgroundColor: AppColors.actionBlue),
                   child: Text('Edit Profile', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
@@ -587,7 +668,11 @@ class _DocumentsView extends StatelessWidget {
           Text('Documents', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
           const Spacer(),
           FilledButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Opening document upload portal...')),
+              );
+            },
             icon: const Icon(Icons.upload_rounded, size: 16),
             label: const Text('Upload'),
             style: FilledButton.styleFrom(backgroundColor: AppColors.actionBlue, textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -660,7 +745,11 @@ class _AdminActionCard extends StatelessWidget {
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Navigating to $title...')),
+          );
+        },
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(20),

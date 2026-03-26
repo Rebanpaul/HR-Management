@@ -38,34 +38,47 @@ class _PayrollAdminScreenState extends State<PayrollAdminScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Payroll', style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.navyDeep, letterSpacing: -0.5)),
-                        Text('March 2025 • Run Payroll by Mar 31', style: GoogleFonts.inter(fontSize: 13, color: AppColors.slateGray)),
-                      ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = MediaQuery.of(context).size.width < 900;
+                  final headerRow = [
+                    Expanded(
+                      flex: isMobile ? 0 : 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Payroll', style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.navyDeep, letterSpacing: -0.5)),
+                          Text('March 2025 • Run Payroll by Mar 31', style: GoogleFonts.inter(fontSize: 13, color: AppColors.slateGray)),
+                        ],
+                      ),
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(color: AppColors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.amber.withOpacity(0.3))),
-                    child: Row(children: [
-                      const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.amber),
-                      const SizedBox(width: 8),
-                      Text('3 revisions pending verification', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.amber)),
-                    ]),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.play_arrow_rounded, size: 16),
-                    label: const Text('Run Payroll'),
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.green, textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
-                  ),
-                ],
+                    if (isMobile) const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(color: AppColors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.amber.withOpacity(0.3))),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.amber),
+                          const SizedBox(width: 8),
+                          Text('3 revisions pending verification', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.amber)),
+                        ],
+                      ),
+                    ),
+                    if (isMobile) const SizedBox(height: 12) else const SizedBox(width: 12),
+                    FilledButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Starting payroll calculation cycle...')),
+                        );
+                      },
+                      icon: const Icon(Icons.play_arrow_rounded, size: 16),
+                      label: const Text('Run Payroll'),
+                      style: FilledButton.styleFrom(backgroundColor: AppColors.green, textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                  ];
+                  return isMobile ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: headerRow) : Row(children: headerRow);
+                }
               ),
               const SizedBox(height: 20),
               TabBar(
@@ -114,15 +127,34 @@ class _PayrollInfoTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // KPI Summary
-          Row(children: const [
-            Expanded(child: _PayrollKpi(title: 'Total Payroll', value: '₹ 13,45,000', sub: 'Mar 2025', color: AppColors.actionBlue)),
-            SizedBox(width: 16),
-            Expanded(child: _PayrollKpi(title: 'Average Salary', value: '₹ 94,718', sub: 'Across 142 employees', color: AppColors.green)),
-            SizedBox(width: 16),
-            Expanded(child: _PayrollKpi(title: 'Pay Period', value: 'Mar 1–31', sub: 'Monthly cycle', color: AppColors.slateGray)),
-            SizedBox(width: 16),
-            Expanded(child: _PayrollKpi(title: 'Pending Items', value: '3', sub: 'Require review', color: AppColors.amber)),
-          ]),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 800;
+              final kpis = [
+                const _PayrollKpi(title: 'Total Payroll', value: '₹ 13,45,000', sub: 'Mar 2025', color: AppColors.actionBlue),
+                const _PayrollKpi(title: 'Average Salary', value: '₹ 94,718', sub: 'Across 142 employees', color: AppColors.green),
+                const _PayrollKpi(title: 'Pay Period', value: 'Mar 1–31', sub: 'Monthly cycle', color: AppColors.slateGray),
+                const _PayrollKpi(title: 'Pending Items', value: '3', sub: 'Require review', color: AppColors.amber),
+              ];
+
+              if (isMobile) {
+                return Column(
+                  children: [
+                    Row(children: [Expanded(child: kpis[0]), const SizedBox(width: 12), Expanded(child: kpis[1])]),
+                    const SizedBox(height: 12),
+                    Row(children: [Expanded(child: kpis[2]), const SizedBox(width: 12), Expanded(child: kpis[3])]),
+                  ],
+                );
+              }
+
+              return Row(children: [
+                Expanded(child: kpis[0]), const SizedBox(width: 16),
+                Expanded(child: kpis[1]), const SizedBox(width: 16),
+                Expanded(child: kpis[2]), const SizedBox(width: 16),
+                Expanded(child: kpis[3]),
+              ]);
+            }
+          ),
           const SizedBox(height: 24),
           // Payroll Component Breakdown
           Container(
@@ -307,38 +339,42 @@ class _PayrollVerifyTab extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-            child: Column(children: [
-              _TableHead(const ['Employee', 'Feb 2025', 'Mar 2025', 'Difference', 'Change %', 'Flag']),
-              ..._data.map((d) {
-                final pct = _pct(d.$2, d.$3);
-                final diff = d.$3 - d.$2;
-                final isWarning = pct.abs() > 5;
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: isWarning ? AppColors.amber.withOpacity(0.05) : Colors.transparent,
-                    border: Border(left: BorderSide(color: isWarning ? AppColors.amber : Colors.transparent, width: 3)),
-                  ),
-                  child: Row(children: [
-                    Expanded(child: Text(d.$1, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navyDeep))),
-                    Expanded(child: Text('₹ ${_fmt(d.$2)}', style: GoogleFonts.inter(fontSize: 13, color: AppColors.slateGray))),
-                    Expanded(child: Text('₹ ${_fmt(d.$3)}', style: GoogleFonts.inter(fontSize: 13, color: AppColors.navyDeep))),
-                    Expanded(child: Text('${diff >= 0 ? '+' : ''}₹ ${_fmt(diff)}', style: GoogleFonts.inter(fontSize: 13, color: diff >= 0 ? AppColors.green : AppColors.red))),
-                    Expanded(child: Text('${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(1)}%', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: isWarning ? AppColors.amber : AppColors.slateGray))),
-                    Expanded(child: isWarning
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: AppColors.amber.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
-                          child: Text('Needs Review', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.amber)),
-                        )
-                      : Text('OK', style: GoogleFonts.inter(fontSize: 12, color: AppColors.green, fontWeight: FontWeight.w600)),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Container(
+              width: MediaQuery.of(context).size.width < 900 ? 900 : (MediaQuery.of(context).size.width - 300).clamp(900, 2000).toDouble(),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+              child: Column(children: [
+                _TableHead(const ['Employee', 'Feb 2025', 'Mar 2025', 'Difference', 'Change %', 'Flag']),
+                ..._data.map((d) {
+                  final pct = _pct(d.$2, d.$3);
+                  final diff = d.$3 - d.$2;
+                  final isWarning = pct.abs() > 5;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isWarning ? AppColors.amber.withOpacity(0.05) : Colors.transparent,
+                      border: Border(left: BorderSide(color: isWarning ? AppColors.amber : Colors.transparent, width: 3)),
                     ),
-                  ]),
-                );
-              }),
-            ]),
+                    child: Row(children: [
+                      Expanded(child: Text(d.$1, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navyDeep))),
+                      Expanded(child: Text('₹ ${_fmt(d.$2)}', style: GoogleFonts.inter(fontSize: 13, color: AppColors.slateGray))),
+                      Expanded(child: Text('₹ ${_fmt(d.$3)}', style: GoogleFonts.inter(fontSize: 13, color: AppColors.navyDeep))),
+                      Expanded(child: Text('${diff >= 0 ? '+' : ''}₹ ${_fmt(diff)}', style: GoogleFonts.inter(fontSize: 13, color: diff >= 0 ? AppColors.green : AppColors.red))),
+                      Expanded(child: Text('${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(1)}%', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: isWarning ? AppColors.amber : AppColors.slateGray))),
+                      Expanded(child: isWarning
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: AppColors.amber.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                            child: Text('Needs Review', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.amber)),
+                          )
+                        : Text('OK', style: GoogleFonts.inter(fontSize: 12, color: AppColors.green, fontWeight: FontWeight.w600)),
+                      ),
+                    ]),
+                  );
+                }),
+              ]),
+            ),
           ),
         ],
       ),

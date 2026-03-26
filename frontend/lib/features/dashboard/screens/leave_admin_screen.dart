@@ -33,23 +33,37 @@ class _LeaveAdminScreenState extends State<LeaveAdminScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              Row(children: [
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Leave & Attendance', style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.navyDeep, letterSpacing: -0.5)),
-                    Text('Track time-off requests and workforce presence', style: GoogleFonts.inter(fontSize: 13, color: AppColors.slateGray)),
-                  ]),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(color: AppColors.red.withOpacity(0.08), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.red.withOpacity(0.2))),
-                  child: Row(children: [
-                    const Icon(Icons.pending_actions_rounded, size: 16, color: AppColors.red),
-                    const SizedBox(width: 8),
-                    Text('3 pending leave approvals', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.red)),
-                  ]),
-                ),
-              ]),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = MediaQuery.of(context).size.width < 900;
+                  final headerRow = [
+                    Expanded(
+                      flex: isMobile ? 0 : 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start, 
+                        children: [
+                          Text('Leave & Attendance', style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.navyDeep, letterSpacing: -0.5)),
+                          Text('Track time-off requests and workforce presence', style: GoogleFonts.inter(fontSize: 13, color: AppColors.slateGray)),
+                        ]
+                      ),
+                    ),
+                    if (isMobile) const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(color: AppColors.red.withOpacity(0.08), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.red.withOpacity(0.2))),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.pending_actions_rounded, size: 16, color: AppColors.red),
+                          const SizedBox(width: 8),
+                          Text('3 pending leave approvals', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.red)),
+                        ],
+                      ),
+                    ),
+                  ];
+                  return isMobile ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: headerRow) : Row(children: headerRow);
+                }
+              ),
               const SizedBox(height: 20),
               TabBar(
                 controller: _tabController,
@@ -103,15 +117,34 @@ class _LeaveMainTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Stats Row
-          Row(children: const [
-            Expanded(child: _LeaveStatCard(label: 'Present Today', value: '5', color: AppColors.green, icon: Icons.check_circle_outline_rounded)),
-            SizedBox(width: 16),
-            Expanded(child: _LeaveStatCard(label: 'On Leave', value: '2', color: AppColors.amber, icon: Icons.event_busy_rounded)),
-            SizedBox(width: 16),
-            Expanded(child: _LeaveStatCard(label: 'Absent', value: '1', color: AppColors.red, icon: Icons.cancel_outlined)),
-            SizedBox(width: 16),
-            Expanded(child: _LeaveStatCard(label: 'Total Strength', value: '8', color: AppColors.slateGray, icon: Icons.people_alt_outlined)),
-          ]),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 800;
+              final stats = [
+                const _LeaveStatCard(label: 'Present Today', value: '5', color: AppColors.green, icon: Icons.check_circle_outline_rounded),
+                const _LeaveStatCard(label: 'On Leave', value: '2', color: AppColors.amber, icon: Icons.event_busy_rounded),
+                const _LeaveStatCard(label: 'Absent', value: '1', color: AppColors.red, icon: Icons.cancel_outlined),
+                const _LeaveStatCard(label: 'Total Strength', value: '8', color: AppColors.slateGray, icon: Icons.people_alt_outlined),
+              ];
+
+              if (isMobile) {
+                return Column(
+                  children: [
+                    Row(children: [Expanded(child: stats[0]), const SizedBox(width: 12), Expanded(child: stats[1])]),
+                    const SizedBox(height: 12),
+                    Row(children: [Expanded(child: stats[2]), const SizedBox(width: 12), Expanded(child: stats[3])]),
+                  ],
+                );
+              }
+
+              return Row(children: [
+                Expanded(child: stats[0]), const SizedBox(width: 16),
+                Expanded(child: stats[1]), const SizedBox(width: 16),
+                Expanded(child: stats[2]), const SizedBox(width: 16),
+                Expanded(child: stats[3]),
+              ]);
+            }
+          ),
           const SizedBox(height: 24),
           // Who Is In Widget
           Container(
@@ -247,13 +280,17 @@ class _LeaveInfoTab extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Leave History by Employee', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
         const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-          child: Column(children: [
-            _LeaveInfoHead(),
-            ..._leaveHistory.map((l) => _LeaveHistoryRow(data: l)),
-          ]),
-        ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Container(
+              width: MediaQuery.of(context).size.width < 900 ? 900 : (MediaQuery.of(context).size.width - 300).clamp(900, 2000).toDouble(),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+              child: Column(children: [
+                _LeaveInfoHead(),
+                ..._leaveHistory.map((l) => _LeaveHistoryRow(data: l)),
+              ]),
+            ),
+          ),
       ]),
     );
   }
@@ -343,7 +380,12 @@ class _LeaveAdminTabState extends State<_LeaveAdminTab> {
             ),
             const Spacer(),
             OutlinedButton.icon(
-              onPressed: () => setState(() { for (var r in _requests) r[4] = 'Approved'; }),
+              onPressed: () {
+                setState(() { for (var r in _requests) r[4] = 'Approved'; });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Bulk approved all pending requests!')),
+                );
+              },
               icon: const Icon(Icons.done_all_rounded, size: 16),
               label: const Text('Bulk Approve'),
               style: OutlinedButton.styleFrom(foregroundColor: AppColors.green, side: const BorderSide(color: AppColors.green), textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -367,13 +409,23 @@ class _LeaveAdminTabState extends State<_LeaveAdminTab> {
                 ])),
                 if (r[4] == 'Pending') ...[
                   OutlinedButton(
-                    onPressed: () => setState(() => _requests[i][4] = 'Rejected'),
+                    onPressed: () {
+                      setState(() => _requests[i][4] = 'Rejected');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Rejected request for ${r[0]}')),
+                      );
+                    },
                     style: OutlinedButton.styleFrom(foregroundColor: AppColors.red, side: const BorderSide(color: AppColors.red), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
                     child: const Text('Reject'),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
-                    onPressed: () => setState(() => _requests[i][4] = 'Approved'),
+                    onPressed: () {
+                      setState(() => _requests[i][4] = 'Approved');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Approved request for ${r[0]}')),
+                      );
+                    },
                     style: FilledButton.styleFrom(backgroundColor: AppColors.green, padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
                     child: const Text('Approve'),
                   ),
@@ -433,7 +485,16 @@ class _LeaveSetupTabState extends State<_LeaveSetupTab> {
             Row(children: [
               Text('Holiday Calendar 2025', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
               const Spacer(),
-              TextButton.icon(onPressed: () {}, icon: const Icon(Icons.add_rounded, size: 16), label: const Text('Add Holiday'), style: TextButton.styleFrom(foregroundColor: AppColors.actionBlue)),
+              TextButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Holiday management portal is now open.')),
+                  );
+                }, 
+                icon: const Icon(Icons.add_rounded, size: 16), 
+                label: const Text('Add Holiday'), 
+                style: TextButton.styleFrom(foregroundColor: AppColors.actionBlue)
+              ),
             ]),
             const SizedBox(height: 12),
             ...[('Jan 26', "Republic Day"), ('Aug 15', "Independence Day"), ('Oct 2', "Gandhi Jayanti"), ('Nov 1', "Kannada Rajyotsava"), ('Dec 25', "Christmas Day")]

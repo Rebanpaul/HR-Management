@@ -42,7 +42,11 @@ class WorkflowAdminScreen extends StatelessWidget {
                         Text('Workflow Builder', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
                         const Spacer(),
                         FilledButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Opening Visual Workflow Builder...')),
+                            );
+                          },
                           icon: const Icon(Icons.add_rounded, size: 16),
                           label: const Text('New Flow'),
                           style: FilledButton.styleFrom(backgroundColor: AppColors.actionBlue, textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -110,7 +114,11 @@ class _ApprovalCard extends StatelessWidget {
           ),
         ),
         FilledButton.tonal(
-          onPressed: () {},
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Successfully approved: $title')),
+            );
+          },
           style: FilledButton.styleFrom(backgroundColor: AppColors.green.withOpacity(0.1), foregroundColor: AppColors.green),
           child: const Text('Approve'),
         ),

@@ -1,0 +1,70 @@
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +17ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHrModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAttendanceModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPayrollModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLeaveModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mIdentityModule dependencies initialized[39m[38;5;3m +0ms[39m
+[33m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [33m   WARN[39m [38;5;3m[LegacyRouteConverter] [39m[33mUnsupported route path: "/api/api/auth/(.*)". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m
+[33m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [33m   WARN[39m [38;5;3m[LegacyRouteConverter] [39m[33mUnsupported route path: "/api/api/health/(.*)". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m
+[33m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [33m   WARN[39m [38;5;3m[LegacyRouteConverter] [39m[33mUnsupported route path: "/api/*". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/api/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/health, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/health/db, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/auth}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/register, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/login, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/refresh, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/logout, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEmployeesController {/api/employees}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/employees, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/employees/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/employees/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/employees/:id, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAttendanceController {/api/attendance}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/attendance/punch-in, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/attendance/punch-out, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/attendance/today, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/attendance/history, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/attendance/team, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPayslipsController {/api/payslips}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/payslips, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/payslips/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/payslips, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/payslips/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLeaveController {/api/leave-requests}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/leave-requests, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/leave-requests/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/leave-requests/balance, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/leave-requests/team, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/leave-requests/:id/approve, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/leave-requests/:id/reject, PATCH} route[39m[38;5;3m +0ms[39m
+✅ Prisma connected to database
+[32m[Nest] 26576  - [39m03/24/2026, 7:08:23 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +2680ms[39m
+[31m[Nest] 26576  - [39m03/24/2026, 7:08:23 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3000[39m[38;5;3m +4ms[39m
+node:net:1940
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at ExpressAdapter.listen (c:\GitHub\HR-Management\backend\node_modules\@nestjs\platform-express\adapters\express-adapter.js:127:32)
+    at c:\GitHub\HR-Management\backend\node_modules\@nestjs\core\nest-application.js:188:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (c:\GitHub\HR-Management\backend\node_modules\@nestjs\core\nest-application.js:178:16)
+    at async bootstrap (c:\GitHub\HR-Management\backend\dist\main.js:19:5) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+
+Node.js v22.18.0

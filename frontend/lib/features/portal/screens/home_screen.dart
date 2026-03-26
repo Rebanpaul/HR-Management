@@ -211,7 +211,7 @@ class _MetricCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final bg = item.emphasized
-        ? AppTheme.brandPrimary
+        ? AppColors.primary
         : colorScheme.surfaceContainerHighest;
     final fg = item.emphasized ? Colors.white : colorScheme.onSurface;
     final subFg = item.emphasized
@@ -343,9 +343,9 @@ class _QuickActionsCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     final actions = [
-      ('Approve Leaves', Icons.task_alt_rounded, AppTheme.brandPrimary),
-      ('Create Payslip', Icons.receipt_long_rounded, AppTheme.brandAccent),
-      ('Add Employee', Icons.person_add_rounded, AppTheme.brandTeal),
+      ('Approve Leaves', Icons.task_alt_rounded, AppColors.primary),
+      ('Create Payslip', Icons.receipt_long_rounded, AppColors.green),
+      ('Add Employee', Icons.person_add_rounded, AppColors.blue),
       ('View Reports', Icons.analytics_rounded, Colors.orange),
     ];
 

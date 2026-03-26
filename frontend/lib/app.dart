@@ -6,8 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
-import 'features/portal/screens/portal_shell.dart';
-import 'features/portal/screens/profile_screen.dart';
+import 'features/ess/screens/ess_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final devBypassLogin = kDebugMode &&
@@ -56,13 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/portal',
-        builder: (context, state) => const PortalShell(),
-        routes: [
-          GoRoute(
-            path: 'profile',
-            builder: (context, state) => const ProfileScreen(),
-          ),
-        ],
+        builder: (context, state) => const EssShell(),
       ),
     ],
   );

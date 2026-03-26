@@ -97,26 +97,28 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    let user;
+    let targetTenantId = dto.tenantId;
 
-    if (dto.tenantId) {
-      // If tenant ID is provided, strictly search by both
-      user = await this.prisma.user.findUnique({
-        where: {
-          email_tenantId: {
-            email: dto.email,
-            tenantId: dto.tenantId,
-          },
-        },
-        include: { employee: true },
-      });
-    } else {
-      // For internal use: find the user purely by email
-      user = await this.prisma.user.findFirst({
-        where: { email: dto.email },
-        include: { employee: true },
-      });
+    if (!targetTenantId) {
+      // Fallback to the first tenant (useful for internal use without Organization ID)
+      const firstTenant = await this.prisma.tenant.findFirst();
+      if (!firstTenant) {
+        throw new UnauthorizedException('No organization found in the system');
+      }
+      targetTenantId = firstTenant.id;
     }
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email_tenantId: {
+          email: dto.email,
+          tenantId: targetTenantId,
+        },
+      },
+      include: {
+        employee: true,
+      },
+    });
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');

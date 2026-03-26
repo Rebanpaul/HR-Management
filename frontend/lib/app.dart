@@ -55,7 +55,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/portal',
-        builder: (context, state) => const EssShell(),
+        builder: (context, state) {
+          final authState = ref.read(authProvider);
+          return EssShell(isManager: authState.user?.isManager ?? false);
+        },
       ),
     ],
   );

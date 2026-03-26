@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/ess_theme.dart';
+import '../../auth/providers/auth_provider.dart';
 
 // Placeholder screens for ESS
 import 'ess_home_screen.dart';
@@ -8,15 +10,15 @@ import 'ess_engage_screen.dart';
 import 'ess_todo_screen.dart';
 import 'ess_essentials_screen.dart';
 
-class EssShell extends StatefulWidget {
+class EssShell extends ConsumerStatefulWidget {
   final bool isManager; // If true, default to To-Do tab
   const EssShell({super.key, this.isManager = false});
 
   @override
-  State<EssShell> createState() => _EssShellState();
+  ConsumerState<EssShell> createState() => _EssShellState();
 }
 
-class _EssShellState extends State<EssShell> {
+class _EssShellState extends ConsumerState<EssShell> {
   int _currentIndex = 0;
 
   @override
@@ -47,6 +49,12 @@ class _EssShellState extends State<EssShell> {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 800;
 
+        final authState = ref.watch(authProvider);
+        final user = authState.user;
+        final initials = user?.employee != null 
+            ? '${user!.employee!.firstName[0]}${user.employee!.lastName[0]}'
+            : 'U';
+
         return Scaffold(
           backgroundColor: EssTheme.background,
           appBar: isMobile
@@ -66,8 +74,8 @@ class _EssShellState extends State<EssShell> {
                       padding: const EdgeInsets.only(right: 16, left: 8),
                       child: CircleAvatar(
                         radius: 16,
-                        backgroundColor: EssTheme.slateBlueLight.withOpacity(0.2),
-                        child: Text('JS', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: EssTheme.slateBlue)),
+                        backgroundColor: EssTheme.slateBlueLight.withValues(alpha: 0.2),
+                        child: Text(initials, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: EssTheme.slateBlue)),
                       ),
                     ),
                   ],
@@ -77,7 +85,7 @@ class _EssShellState extends State<EssShell> {
               ? _screens[_currentIndex]
               : Row(
                   children: [
-                    _buildDesktopSidebar(),
+                    _buildDesktopSidebar(user, initials),
                     Expanded(
                       child: Column(
                         children: [
@@ -108,7 +116,7 @@ class _EssShellState extends State<EssShell> {
     );
   }
 
-  Widget _buildDesktopSidebar() {
+  Widget _buildDesktopSidebar(dynamic user, String initials) {
     return Container(
       width: 260,
       color: EssTheme.surface,
@@ -144,7 +152,7 @@ class _EssShellState extends State<EssShell> {
                     leading: Icon(item.icon, color: isSelected ? EssTheme.slateBlue : EssTheme.textSecondary, size: 22),
                     title: Text(item.label, style: GoogleFonts.inter(fontSize: 14, fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500, color: isSelected ? EssTheme.textPrimary : EssTheme.textSecondary)),
                     selected: isSelected,
-                    selectedTileColor: EssTheme.slateBlueLight.withOpacity(0.1),
+                    selectedTileColor: EssTheme.slateBlueLight.withValues(alpha: 0.1),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     onTap: () => setState(() => _currentIndex = index),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -153,24 +161,27 @@ class _EssShellState extends State<EssShell> {
               },
             ),
           ),
-          // User Profile Foot
+          // User Profile Footer
           Container(
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(border: Border(top: BorderSide(color: EssTheme.border))),
             child: Row(
               children: [
-                CircleAvatar(backgroundColor: EssTheme.slateBlueLight.withOpacity(0.2), child: Text('JS', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: EssTheme.slateBlue))),
+                CircleAvatar(backgroundColor: EssTheme.slateBlueLight.withValues(alpha: 0.2), child: Text(initials, style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: EssTheme.slateBlue))),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('John Smith', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: EssTheme.textPrimary)),
-                      Text('Engineering', style: GoogleFonts.inter(fontSize: 12, color: EssTheme.textSecondary)),
+                      Text(user?.employee?.fullName ?? 'User', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: EssTheme.textPrimary)),
+                      Text(user?.role ?? 'Employee', style: GoogleFonts.inter(fontSize: 12, color: EssTheme.textSecondary)),
                     ],
                   ),
                 ),
-                IconButton(icon: const Icon(Icons.logout_rounded, size: 20, color: EssTheme.textSecondary), onPressed: () {}),
+                IconButton(
+                  icon: const Icon(Icons.logout_rounded, size: 20, color: EssTheme.textSecondary),
+                  onPressed: () => ref.read(authProvider.notifier).logout(),
+                ),
               ],
             ),
           ),

@@ -1,4 +1,4 @@
-# StaffSource Connect — HRMS SaaS Platform
+## HRMS SaaS Platform
 
 Enterprise-grade Human Resource Management System with multi-tenant architecture.
 
